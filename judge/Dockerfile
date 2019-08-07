@@ -11,6 +11,6 @@ ADD ./ /src
 WORKDIR /src
 
 # Run judge
-RUN npm ci
+RUN cd src && npm ci
 ENV ISABELLE_PATH=/home/isabelle/Isabelle/bin/isabelle
-ENTRYPOINT [ "npx", "ts-node", "judge.ts" ]
+ENTRYPOINT [ "npx", "ts-node", "src/judge.ts" ]
