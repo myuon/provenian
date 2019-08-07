@@ -1,0 +1,12 @@
+{
+  "name": "aws-typescript",
+  "devDependencies": {
+    "@types/node": "latest"
+  },
+  "dependencies": {
+    "@pulumi/aws": "latest",
+    "@pulumi/awsx": "latest",
+    "@pulumi/pulumi": "latest",
+    "@myuon/pulumi-extra": "git@github.com:myuon/pulumi-extra.git"
+  }
+}
