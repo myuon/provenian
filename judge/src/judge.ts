@@ -78,27 +78,40 @@ const runJudge = async (submissionId: string) => {
     .promise();
 };
 
+const sleep = time => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve();
+    }, time);
+  });
+};
+
 const main = async () => {
   const queueUrl = (await sqs
     .getQueueUrl({
       QueueName: JUDGE_QUEUE_NAME
     })
     .promise()).QueueUrl;
-  const messages = await readJobFromQueue(queueUrl);
 
-  await Promise.all(
-    messages.map(async message => {
-      const submissionId = message.Body;
+  while (true) {
+    const messages = await readJobFromQueue(queueUrl);
 
-      await runJudge(submissionId);
-      await sqs
-        .deleteMessage({
-          QueueUrl: queueUrl,
-          ReceiptHandle: message.ReceiptHandle
-        })
-        .promise();
-    })
-  );
+    await Promise.all(
+      messages.map(async message => {
+        const submissionId = message.Body;
+
+        await runJudge(submissionId);
+        await sqs
+          .deleteMessage({
+            QueueUrl: queueUrl,
+            ReceiptHandle: message.ReceiptHandle
+          })
+          .promise();
+      })
+    );
+
+    sleep(15000);
+  }
 };
 
 main();

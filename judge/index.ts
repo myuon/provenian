@@ -137,10 +137,10 @@ const main = async () => {
     containerDefinitions: JSON.stringify([
       {
         Name: "worker",
-        Cpu: 1,
+        Cpu: 2,
         Essential: true,
         Image: parameters.dockerImage,
-        Memory: 256,
+        Memory: 768,
         Environment: [
           {
             Name: "SUBMISSION_TABLE_NAME",
@@ -214,9 +214,6 @@ const main = async () => {
             version: "$Latest"
           },
           overrides: [
-            {
-              instanceType: "t3.nano"
-            },
             {
               instanceType: "t3.micro"
             },
