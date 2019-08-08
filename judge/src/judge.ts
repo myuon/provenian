@@ -41,7 +41,7 @@ const runJudge = async (submissionId: string) => {
   fs.writeFileSync(SUBMISSION_FILE_PATH, submission.code);
 
   // verification check
-  const result = new Promise((resolve, reject) => {
+  const result = await new Promise((resolve, reject) => {
     const stdoutLogFile = "./out.log";
     const logStream = fs.createWriteStream(stdoutLogFile, { flags: "a" });
 
@@ -56,24 +56,29 @@ const runJudge = async (submissionId: string) => {
     proc.on("close", code => {
       logStream.close();
 
-      resolve({
+      const result = {
         statusCode: code === 0 ? "V" : "CE",
         statusText: code === 0 ? "Verified" : "Compilation Error",
-        message: fs.readFileSync(stdoutLogFile)
-      });
+        message: fs.readFileSync(stdoutLogFile, "utf8")
+      };
+      resolve(result);
     });
   });
 
-  await dynamo
-    .update({
+  const item = (await dynamo
+    .get({
       TableName: SUBMISSION_TABLE_NAME,
       Key: {
         id: submissionId
-      },
-      UpdateExpression: "set result = :result",
-      ExpressionAttributeValues: {
-        ":result": result
       }
+    })
+    .promise()).Item;
+  await dynamo
+    .put({
+      TableName: SUBMISSION_TABLE_NAME,
+      Item: Object.assign(item, {
+        result
+      })
     })
     .promise();
 };
@@ -96,21 +101,23 @@ const main = async () => {
   while (true) {
     const messages = await readJobFromQueue(queueUrl);
 
-    await Promise.all(
-      messages.map(async message => {
-        const submissionId = message.Body;
+    if (messages) {
+      await Promise.all(
+        messages.map(async message => {
+          const submissionId = message.Body;
 
-        await runJudge(submissionId);
-        await sqs
-          .deleteMessage({
-            QueueUrl: queueUrl,
-            ReceiptHandle: message.ReceiptHandle
-          })
-          .promise();
-      })
-    );
+          await runJudge(submissionId);
+          await sqs
+            .deleteMessage({
+              QueueUrl: queueUrl,
+              ReceiptHandle: message.ReceiptHandle
+            })
+            .promise();
+        })
+      );
+    }
 
-    sleep(15000);
+    await sleep(15000);
   }
 };
 
