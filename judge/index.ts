@@ -137,7 +137,7 @@ const main = async () => {
     containerDefinitions: JSON.stringify([
       {
         Name: "worker",
-        Cpu: 2,
+        Cpu: 1024,
         Essential: true,
         Image: parameters.dockerImage,
         Memory: 768,
