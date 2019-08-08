@@ -33,6 +33,7 @@ func (repo SubmitRepo) Create(code string) (Submission, error) {
 	submission := Submission{
 		ID:        uuid.Must(uuid.NewV4()).String(),
 		CreatedAt: time.Now().Unix(),
+		Code:      code,
 	}
 
 	if err := repo.table.Put(submission).Run(); err != nil {
@@ -46,7 +47,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 	sess := session.Must(session.NewSession())
 
 	db := dynamo.NewFromIface(dynamodb.New(sess))
-	judgeQueue := sqs.New(sess)
+	sqsc := sqs.New(sess)
 
 	submitRepo := SubmitRepo{
 		table: db.Table(submitTableName),
@@ -57,7 +58,15 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		panic(err)
 	}
 
-	_, err = judgeQueue.SendMessage(&sqs.SendMessageInput{
+	out, err := sqsc.GetQueueUrl(&sqs.GetQueueUrlInput{
+		QueueName: aws.String(judgeQueueName),
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	_, err = sqsc.SendMessage(&sqs.SendMessageInput{
+		QueueUrl:    out.QueueUrl,
 		MessageBody: aws.String(submission.ID),
 	})
 	if err != nil {

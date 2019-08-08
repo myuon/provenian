@@ -32,7 +32,7 @@ const lambdaRole = (() => {
       .getPolicyDocument({
         statements: [
           {
-            actions: ["s3:*", "dynamodb:*", "logs:*"],
+            actions: ["sqs:*", "dynamodb:*", "logs:*"],
             effect: "Allow",
             resources: ["*"]
           }
