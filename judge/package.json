@@ -8,5 +8,8 @@
     "@pulumi/pulumi": "latest",
     "@pulumi/aws": "latest",
     "@pulumi/awsx": "latest"
+  },
+  "scripts": {
+    "docker:push": "sudo docker build . -t myuon/isabelle-judge:latest && sudo docker push myuon/isabelle-judge:latest"
   }
 }

@@ -13,4 +13,5 @@ WORKDIR /src
 # Run judge
 RUN cd src && npm ci
 ENV ISABELLE_PATH=/home/isabelle/Isabelle/bin/isabelle
+ENV SUBMISSION_FILE_PATH=/src/isabelle/Submitted.thy
 ENTRYPOINT [ "npx", "ts-node", "src/judge.ts" ]

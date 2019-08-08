@@ -140,7 +140,7 @@ const main = async () => {
         Cpu: 1024,
         Essential: true,
         Image: parameters.dockerImage,
-        Memory: 768,
+        Memory: 1500,
         Environment: [
           {
             Name: "SUBMISSION_TABLE_NAME",
@@ -222,7 +222,7 @@ echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
           },
           overrides: [
             {
-              instanceType: "t3.micro"
+              instanceType: "m3.medium"
             },
             {
               instanceType: "t3.small"
