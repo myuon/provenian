@@ -154,7 +154,14 @@ const main = async () => {
             Name: "SUBMISSION_FILE_PATH",
             Value: parameters.submission_file_path
           }
-        ]
+        ],
+        LogConfiguration: {
+          LogDriver: "awslogs",
+          Options: {
+            "awslogs-region": "ap-northeast-1",
+            "awslogs-group": `${config.service}-${config.stage}`
+          }
+        }
       }
     ]),
     family: "service"
@@ -189,7 +196,7 @@ const main = async () => {
       },
       userData: cluster.name.apply(name =>
         new Buffer(`#!/bin/bash -xe
-    echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
+echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
       )
     }
   );
