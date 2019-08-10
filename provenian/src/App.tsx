@@ -1,6 +1,6 @@
 import React from "react";
-import { Segment, Menu, Container, Grid } from "semantic-ui-react";
-import { BrowserRouter as Router, Route, Link } from "react-router-dom";
+import { Container, Grid } from "semantic-ui-react";
+import { BrowserRouter as Router, Route } from "react-router-dom";
 import Problem from "./view/Problem";
 import Index from "./view/Index";
 import Submission from "./view/Submission";
