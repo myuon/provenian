@@ -5,7 +5,8 @@ import {
   Select,
   Header,
   Accordion,
-  Icon
+  Icon,
+  Label
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import axios from "axios";
@@ -66,6 +67,12 @@ end
         <code>xs</code>と<code>rev xs</code>
         を連結させて作ったリストの長さが偶数であることを示せ。
       </p>
+
+      <div>
+        対応言語: &nbsp;
+        <Label color={"yellow"}>Isabelle</Label>{" "}
+        <Label color={"grey"}>Coq</Label>
+      </div>
 
       <p>検証時間制限: 10sec / メモリ上限: 1500MB</p>
 
