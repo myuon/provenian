@@ -120,7 +120,8 @@ const apiDeployment = new aws.apigateway.Deployment(
   "api-deployment",
   {
     restApi: api,
-    stageName: config.stage
+    stageName: config.stage,
+    stageDescription: new Date().toLocaleString()
   },
   {
     dependsOn: [submitAPI, getSubmissionAPI]
