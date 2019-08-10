@@ -4,18 +4,13 @@ import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import Problem from "./view/Problem";
 import Index from "./view/Index";
 import Submission from "./view/Submission";
+import NavBar from "./view/NavBar";
 
 const App: React.FC = () => {
   return (
     <Router>
       <div className="App">
-        <Segment>
-          <Menu fixed="top" inverted={true}>
-            <Menu.Item>
-              <Link to={"/"}>Provenian</Link>
-            </Menu.Item>
-          </Menu>
-        </Segment>
+        <NavBar />
 
         <Container style={{ marginTop: "50px" }}>
           <Grid centered>
