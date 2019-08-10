@@ -57,8 +57,8 @@ const runJudge = async (submissionId: string) => {
       logStream.close();
 
       const result = {
-        statusCode: code === 0 ? "V" : "CE",
-        statusText: code === 0 ? "Verified" : "Compilation Error",
+        status_code: code === 0 ? "V" : "CE",
+        status_text: code === 0 ? "Verified" : "Compilation Error",
         message: fs.readFileSync(stdoutLogFile, "utf8")
       };
       resolve(result);
