@@ -1,5 +1,5 @@
-import React, { createRef } from "react";
-import { Segment, Menu, Container, Grid, Sticky, Ref } from "semantic-ui-react";
+import React from "react";
+import { Segment, Menu, Container, Grid } from "semantic-ui-react";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import Problem from "./view/Problem";
 import Index from "./view/Index";

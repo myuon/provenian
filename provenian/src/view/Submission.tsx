@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Header, Grid, Label, Popup } from "semantic-ui-react";
+import { Header, Label, Popup } from "semantic-ui-react";
 import axios from "axios";
 import { RouteComponentProps } from "react-router";
 
@@ -31,7 +31,6 @@ const Submission: React.FC<
         }`
       )).data;
 
-      console.log(result);
       setSource(code);
       setJudgeResult(result);
 
@@ -46,12 +45,11 @@ const Submission: React.FC<
           : "violet"
       );
     })();
-  }, []);
+  }, [props.match.params.submissionId]);
 
   return (
     <>
       <Header as="h2">提出</Header>
-
       <Popup
         content={judgeResult.status_text}
         trigger={
@@ -64,13 +62,11 @@ const Submission: React.FC<
       <Header as="h2">結果</Header>
 
       <Header as="h4">ビルド出力</Header>
-
       <code>
         <pre>{judgeResult.message}</pre>
       </code>
 
       <Header as="h4">提出コード</Header>
-
       <code>
         <pre>{source}</pre>
       </code>
