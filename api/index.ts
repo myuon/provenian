@@ -130,25 +130,39 @@ const apiDeployment = new aws.apigateway.Deployment(
 
 const storageBucket = new aws.s3.Bucket("storage", {
   bucketPrefix: `${config.service}-${config.stage}-storage`,
-  policy: aws.iam.getPolicyDocument({}).then(result => result.json)
+  corsRules: [
+    {
+      allowedHeaders: ["*"],
+      allowedMethods: ["GET"],
+      allowedOrigins: ["*"]
+    }
+  ]
 });
 
-new aws.s3.BucketPolicy("storage-policy", {
-  bucket: storageBucket.bucket,
-  policy: storageBucket.bucket.apply(bucketName =>
-    JSON.stringify({
-      Version: "2012-10-17",
-      Statement: [
-        {
-          Effect: "Allow",
-          Principal: "*",
-          Action: ["s3:GetObject"],
-          Resource: [`arn:aws:s3:::${bucketName}/*`]
-        }
-      ]
-    })
-  )
-});
+new aws.s3.BucketPolicy(
+  "storage-policy",
+  {
+    bucket: storageBucket.bucket,
+    policy: storageBucket.bucket.apply(bucketName =>
+      JSON.stringify({
+        Version: "2012-10-17",
+        Id: "S3Policy",
+        Statement: [
+          {
+            Sid: "1",
+            Effect: "Allow",
+            Principal: "*",
+            Action: ["s3:GetObject"],
+            Resource: [`arn:aws:s3:::${bucketName}/*`]
+          }
+        ]
+      })
+    )
+  },
+  {
+    dependsOn: [storageBucket]
+  }
+);
 
 export const output = {
   restApi: apiDeployment.invokeUrl,
