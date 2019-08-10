@@ -64,6 +64,20 @@ const api = new aws.apigateway.RestApi("api", {
   name: `${config.service}-${config.stage}`
 });
 
+const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
+  filepath: "submit",
+  handlerName: `${config.service}-${config.stage}-submit`,
+  role: lambdaRole,
+  lambdaOptions: {
+    environment: {
+      variables: {
+        submitTableName: submitTable.name,
+        judgeQueueName: judgeQueue.name
+      }
+    }
+  }
+});
+
 const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
   authorization: "NONE",
   httpMethod: "POST",
@@ -76,20 +90,26 @@ const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
   integration: {
     type: "AWS_PROXY"
   },
-  handler: pulumi_extra.lambda.createLambdaFunction("submit", {
-    filepath: "submit",
-    handlerName: `${config.service}-${config.stage}-submit`,
-    role: lambdaRole,
-    lambdaOptions: {
-      environment: {
-        variables: {
-          submitTableName: submitTable.name,
-          judgeQueueName: judgeQueue.name
-        }
-      }
-    }
-  })
+  handler: submitHandler
 });
+
+const getSubmissionAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "get-submit",
+  {
+    authorization: "NONE",
+    httpMethod: "GET",
+    resource: createCORSResource("submissions", {
+      parentId: api.rootResourceId,
+      pathPart: "submissions",
+      restApi: api
+    }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: submitHandler
+  }
+);
 
 const apiDeployment = new aws.apigateway.Deployment(
   "api-deployment",
@@ -98,7 +118,7 @@ const apiDeployment = new aws.apigateway.Deployment(
     stageName: config.stage
   },
   {
-    dependsOn: [submitAPI]
+    dependsOn: [submitAPI, getSubmissionAPI]
   }
 );
 
