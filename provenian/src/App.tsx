@@ -18,7 +18,7 @@ const App: React.FC = () => {
         </Segment>
 
         <Grid centered>
-          <Grid.Column width={6}>
+          <Grid.Column width={8}>
             <Container>
               <Route exact path="/" component={Index} />
               <Route path="/problems/" component={Problem} />

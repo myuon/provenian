@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Segment,
   Form,
@@ -8,6 +8,8 @@ import {
   Icon
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
+import axios from "axios";
+import { RouteComponentProps } from "react-router";
 
 const languages = [
   {
@@ -17,7 +19,7 @@ const languages = [
   }
 ];
 
-const Problem: React.FC = () => {
+const Problem: React.FC<RouteComponentProps> = props => {
   const ttfont = {
     "font-family": "Consolas, 'Courier New', Courier, Monaco, monospace",
     "font-size": "14px",
@@ -35,6 +37,18 @@ sorry
 
 end
 `
+  };
+
+  const [sourceCode, setSourceCode] = useState("");
+
+  const submit = async () => {
+    const result = await axios.post(
+      `${process.env.REACT_APP_API_ENDPOINT}/submit`,
+      sourceCode
+    );
+    console.log(result.data);
+
+    props.history.push(`/submissions/${result.data.id}`);
   };
 
   return (
@@ -80,8 +94,10 @@ end
           label="Source Code"
           placeholder="code here..."
           style={{ ttfont }}
+          value={sourceCode}
+          onChange={(event: any) => setSourceCode(event.target.value)}
         />
-        <Form.Button>Submit</Form.Button>
+        <Form.Button onClick={submit}>Submit</Form.Button>
       </Form>
     </>
   );
