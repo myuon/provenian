@@ -93,14 +93,19 @@ const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
   handler: submitHandler
 });
 
-const getSubmissionAPI = pulumi_extra.apigateway.createLambdaMethod(
-  "get-submit",
-  {
+const getSubmissionAPI = (() => {
+  const submissions = new aws.apigateway.Resource("submissions", {
+    parentId: api.rootResourceId,
+    pathPart: "submissions",
+    restApi: api
+  });
+
+  return pulumi_extra.apigateway.createLambdaMethod("get-submit", {
     authorization: "NONE",
     httpMethod: "GET",
-    resource: createCORSResource("submissions", {
-      parentId: api.rootResourceId,
-      pathPart: "submissions",
+    resource: createCORSResource("submissions-id", {
+      parentId: submissions.id,
+      pathPart: "{submissionId}",
       restApi: api
     }),
     restApi: api,
@@ -108,8 +113,8 @@ const getSubmissionAPI = pulumi_extra.apigateway.createLambdaMethod(
       type: "AWS_PROXY"
     },
     handler: submitHandler
-  }
-);
+  });
+})();
 
 const apiDeployment = new aws.apigateway.Deployment(
   "api-deployment",

@@ -146,7 +146,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 	if event.HTTPMethod == "POST" {
 		return doPost(submitRepo, sqsc, event.Body)
 	} else if event.HTTPMethod == "GET" {
-		return doGet(submitRepo, event.Body)
+		return doGet(submitRepo, event.PathParameters["submissionId"])
 	}
 
 	panic("unreachable")
