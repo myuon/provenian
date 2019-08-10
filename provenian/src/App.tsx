@@ -1,5 +1,5 @@
-import React from "react";
-import { Segment, Menu, Container, Grid } from "semantic-ui-react";
+import React, { createRef } from "react";
+import { Segment, Menu, Container, Grid, Sticky, Ref } from "semantic-ui-react";
 import { BrowserRouter as Router, Route, Link } from "react-router-dom";
 import Problem from "./view/Problem";
 import Index from "./view/Index";
@@ -17,15 +17,15 @@ const App: React.FC = () => {
           </Menu>
         </Segment>
 
-        <Grid centered>
-          <Grid.Column width={8}>
-            <Container>
+        <Container style={{ "margin-top": "50px" }}>
+          <Grid centered>
+            <Grid.Column width={8}>
               <Route exact path="/" component={Index} />
               <Route path="/problems/" component={Problem} />
-              <Route path="/submissions/" component={Submission} />
-            </Container>
-          </Grid.Column>
-        </Grid>
+              <Route path="/submissions/:submissionId" component={Submission} />
+            </Grid.Column>
+          </Grid>
+        </Container>
       </div>
     </Router>
   );
