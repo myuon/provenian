@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/aws/aws-sdk-go/aws"
 	"os"
 	"time"
@@ -24,8 +25,8 @@ type SubmitRepo struct {
 }
 
 type Submission struct {
-	ID        string `dynamo:"id"`
-	CreatedAt int64  `dynamo:"created_at"`
+	ID        string `dynamo:"id" json:"id"`
+	CreatedAt int64  `dynamo:"created_at" json:"created_at"`
 	Code      string `dynamo:"code"`
 }
 
@@ -73,8 +74,17 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		panic(err)
 	}
 
+	body, err := json.Marshal(submission)
+	if err != nil {
+		panic(err)
+	}
+
 	return events.APIGatewayProxyResponse{
 		StatusCode: 200,
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body: string(body),
 	}, nil
 }
 
