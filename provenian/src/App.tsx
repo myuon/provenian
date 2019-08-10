@@ -17,7 +17,7 @@ const App: React.FC = () => {
           </Menu>
         </Segment>
 
-        <Container style={{ "margin-top": "50px" }}>
+        <Container style={{ marginTop: "50px" }}>
           <Grid centered>
             <Grid.Column width={8}>
               <Route exact path="/" component={Index} />

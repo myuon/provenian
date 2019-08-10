@@ -13,6 +13,11 @@ import { RouteComponentProps } from "react-router";
 
 const languages = [
   {
+    key: "coq",
+    value: "coq",
+    text: "Coq"
+  },
+  {
     key: "isabelle2019",
     value: "isabelle2019",
     text: "Isabelle (2019)"
@@ -40,6 +45,7 @@ end
   };
 
   const [sourceCode, setSourceCode] = useState("");
+  const [language, setLanguage] = useState(-1);
 
   const submit = async () => {
     const result = await axios.post(
@@ -68,17 +74,27 @@ end
 
       <Segment>
         <Accordion>
-          <Accordion.Title active={false} index={1}>
+          <Accordion.Title
+            active={language === 0}
+            index={0}
+            onClick={() => setLanguage(language === 0 ? -1 : 0)}
+          >
             <Icon name="dropdown" />
             Coq
           </Accordion.Title>
-          <Accordion.Content active={false} />
+          <Accordion.Content active={language === 0}>
+            <pre>Not yet implemented</pre>
+          </Accordion.Content>
 
-          <Accordion.Title active={true} index={0}>
+          <Accordion.Title
+            active={language === 1}
+            index={1}
+            onClick={() => setLanguage(language === 1 ? -1 : 1)}
+          >
             <Icon name="dropdown" />
             Isabelle
           </Accordion.Title>
-          <Accordion.Content active={true}>
+          <Accordion.Content active={language === 1}>
             <pre>{template.isabelle}</pre>
           </Accordion.Content>
         </Accordion>
@@ -87,7 +103,11 @@ end
       <Form>
         <Form.Field>
           <label>Language</label>
-          <Select placeholder="Select language" options={languages} />
+          <Select
+            placeholder="Select language"
+            options={languages}
+            value={language === -1 ? undefined : languages[language].value}
+          />
         </Form.Field>
         <Form.Field
           control={TextareaAutosize}
