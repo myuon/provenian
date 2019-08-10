@@ -16,7 +16,7 @@ const App: React.FC = () => {
           <Grid centered>
             <Grid.Column width={8}>
               <Route exact path="/" component={Index} />
-              <Route path="/problems/" component={Problem} />
+              <Route path="/problems/:problemId" component={Problem} />
               <Route path="/submissions/:submissionId" component={Submission} />
             </Grid.Column>
           </Grid>

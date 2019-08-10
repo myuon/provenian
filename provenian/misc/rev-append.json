@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "title": "Reversely Appended",
+  "content_type": "text/markdown",
+  "content": "Q. リスト `xs` を反転させたものを `rev xs` と書くことにする。 `xs` と `rev xs` を連結させて作ったリストの長さが偶数であることを示せ。",
+  "template": {
+    "coq": "Not yet supported",
+    "isabelle2019": "theory Submitted\nimports Main\n\nbegin\n\ntheorem goal: \"even (length (xs @ rev xs))\"\nsorry\n\nend"
+  }
+}

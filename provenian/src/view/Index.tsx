@@ -8,7 +8,7 @@ const Index: React.FC = () => {
       <Header as="h2">問題一覧</Header>
       <ul>
         <li>
-          <Link to={"/problems/001"}>Reversely Appended</Link>
+          <Link to={"/problems/rev-append"}>Reversely Appended</Link>
         </li>
       </ul>
     </>
