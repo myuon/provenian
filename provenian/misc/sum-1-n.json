@@ -1,0 +1,9 @@
+{
+  "version": "1.0",
+  "title": "Sums up to N",
+  "content_type": "text/markdown",
+  "content": "Q. `n` を自然数とする。 `0` から `n` までの総和が `n(n+1)/2` と等しいことを証明せよ。",
+  "template": {
+    "isabelle2019": "theory Submitted\nimports Main\n\nbegin\n\ntheorem goal: \"Sum {0..n} = n * (n + 1) div 2\"\nsorry\n\nend"
+  }
+}
