@@ -128,8 +128,31 @@ const apiDeployment = new aws.apigateway.Deployment(
   }
 );
 
+const storageBucket = new aws.s3.Bucket("storage", {
+  bucketPrefix: `${config.service}-${config.stage}-storage`,
+  policy: aws.iam.getPolicyDocument({}).then(result => result.json)
+});
+
+new aws.s3.BucketPolicy("storage-policy", {
+  bucket: storageBucket.bucket,
+  policy: storageBucket.bucket.apply(bucketName =>
+    JSON.stringify({
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Principal: "*",
+          Action: ["s3:GetObject"],
+          Resource: [`arn:aws:s3:::${bucketName}/*`]
+        }
+      ]
+    })
+  )
+});
+
 export const output = {
   restApi: apiDeployment.invokeUrl,
   submitTableName: submitTable.name,
-  judgeQueueName: judgeQueue.name
+  judgeQueueName: judgeQueue.name,
+  storageBucketDomain: storageBucket.bucketDomainName
 };
