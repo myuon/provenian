@@ -57,7 +57,7 @@ func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
 	submission.ID = uuid.NewV4().String()
 	submission.CreatedAt = time.Now().Unix()
 
-	codeFilePath := submission.ProblemID + "/" + submission.ID
+	codeFilePath := submission.ProblemID + "/submissions/" + submission.ID
 	if _, err := repo.s3service.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(storageBucketName),
 		Key:    aws.String(codeFilePath),
