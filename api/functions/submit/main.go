@@ -91,6 +91,21 @@ func (repo SubmitRepo) Get(ID string) (Submission, error) {
 	return submission, nil
 }
 
+func (repo SubmitRepo) ListByProblemID(ID string) ([]Submission, error) {
+	var submissions []Submission
+	if err := repo.table.Get("problem_id", ID).Index("problems").All(&submissions); err != nil {
+		return nil, err
+	}
+
+	for _, submission := range submissions {
+		if submission.Result == (Result{}) {
+			submission.Result = wjResult()
+		}
+	}
+
+	return submissions, nil
+}
+
 type JobQueue struct {
 	queue sqs.SQS
 }
@@ -161,6 +176,26 @@ func doGet(submitRepo SubmitRepo, submissionID string) (events.APIGatewayProxyRe
 	}, nil
 }
 
+func doList(submitRepo SubmitRepo, problemID string) (events.APIGatewayProxyResponse, error) {
+	submissions, err := submitRepo.ListByProblemID(problemID)
+	if err != nil {
+		panic(err)
+	}
+
+	body, err := json.Marshal(submissions)
+	if err != nil {
+		panic(err)
+	}
+
+	return events.APIGatewayProxyResponse{
+		StatusCode: 200,
+		Headers: map[string]string{
+			"Access-Control-Allow-Origin": "*",
+		},
+		Body: string(body),
+	}, nil
+}
+
 type SubmitInput struct {
 	Language string `json:"language"`
 	Code     string `json:"code"`
@@ -191,8 +226,10 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		}
 
 		return doPost(submitRepo, jobQueue, submission)
-	} else if event.HTTPMethod == "GET" {
-		return doGet(submitRepo, event.PathParameters["submissionId"])
+	} else if problemID, ok := event.PathParameters["problemId"]; event.HTTPMethod == "GET" && ok {
+		return doList(submitRepo, problemID)
+	} else if submissionID, ok := event.PathParameters["submissionId"]; event.HTTPMethod == "GET" && ok {
+		return doGet(submitRepo, submissionID)
 	}
 
 	panic("unreachable")

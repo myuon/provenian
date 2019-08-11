@@ -87,9 +87,25 @@ const submitTable = new aws.dynamodb.Table("submit", {
     {
       name: "id",
       type: "S"
+    },
+    {
+      name: "problem_id",
+      type: "S"
+    },
+    {
+      name: "created_at",
+      type: "N"
     }
   ],
-  hashKey: "id"
+  hashKey: "id",
+  globalSecondaryIndexes: [
+    {
+      name: "problems",
+      hashKey: "problem_id",
+      rangeKey: "created_at",
+      projectionType: "ALL"
+    }
+  ]
 });
 
 const judgeQueue = new aws.sqs.Queue("judge-queue", {
@@ -115,24 +131,40 @@ const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
   }
 });
 
-const submitAPI = (() => {
-  const problemResource = new aws.apigateway.Resource("problems", {
-    parentId: api.rootResourceId,
-    pathPart: "problems",
-    restApi: api
-  });
-  const problemIdResource = new aws.apigateway.Resource("problemId", {
-    parentId: problemResource.id,
-    pathPart: "{problemId}",
-    restApi: api
-  });
+const problemResource = new aws.apigateway.Resource("problems", {
+  parentId: api.rootResourceId,
+  pathPart: "problems",
+  restApi: api
+});
+const problemIdResource = new aws.apigateway.Resource("problemId", {
+  parentId: problemResource.id,
+  pathPart: "{problemId}",
+  restApi: api
+});
 
-  return pulumi_extra.apigateway.createLambdaMethod("submit", {
+const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
+  authorization: "NONE",
+  httpMethod: "POST",
+  resource: createCORSResource("submit", {
+    parentId: problemIdResource.id,
+    pathPart: "submit",
+    restApi: api
+  }),
+  restApi: api,
+  integration: {
+    type: "AWS_PROXY"
+  },
+  handler: submitHandler
+});
+
+const listSubmissionAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "list-submissions",
+  {
     authorization: "NONE",
-    httpMethod: "POST",
-    resource: createCORSResource("submit", {
+    httpMethod: "GET",
+    resource: createCORSResource("problems-submissions", {
       parentId: problemIdResource.id,
-      pathPart: "submit",
+      pathPart: "submissions",
       restApi: api
     }),
     restApi: api,
@@ -140,8 +172,8 @@ const submitAPI = (() => {
       type: "AWS_PROXY"
     },
     handler: submitHandler
-  });
-})();
+  }
+);
 
 const getSubmissionAPI = (() => {
   const submissions = new aws.apigateway.Resource("submissions", {
@@ -174,7 +206,7 @@ const apiDeployment = new aws.apigateway.Deployment(
     stageDescription: new Date().toLocaleString()
   },
   {
-    dependsOn: [submitAPI, getSubmissionAPI]
+    dependsOn: [submitAPI, getSubmissionAPI, listSubmissionAPI]
   }
 );
 
