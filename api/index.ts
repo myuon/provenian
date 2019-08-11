@@ -116,6 +116,12 @@ const api = new aws.apigateway.RestApi("api", {
   name: `${config.service}-${config.stage}`
 });
 
+const authorizer = pulumi_extra.lambda.createLambdaFunction("authorizer", {
+  filepath: "authorizer",
+  handlerName: `${config.service}-${config.stage}-authorizer`,
+  role: lambdaRole
+});
+
 const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
   filepath: "submit",
   handlerName: `${config.service}-${config.stage}-submit`,
@@ -143,7 +149,10 @@ const problemIdResource = new aws.apigateway.Resource("problemId", {
 });
 
 const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
-  authorization: "NONE",
+  authorization: "CUSTOM",
+  method: {
+    authorizerId: authorizer.id
+  },
   httpMethod: "POST",
   resource: createCORSResource("submit", {
     parentId: problemIdResource.id,

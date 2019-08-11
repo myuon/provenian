@@ -53,7 +53,7 @@ type Submission struct {
 }
 
 func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
-	submission.ID = uuid.Must(uuid.NewV4()).String()
+	submission.ID = uuid.NewV4().String()
 	submission.CreatedAt = time.Now().Unix()
 
 	codeFilePath := submission.ProblemID + "/" + submission.ID
@@ -221,7 +221,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		submission := Submission{
 			ProblemID: event.PathParameters["problemId"],
 			Code:      input.Code,
-			UserID:    "",
+			UserID:    event.RequestContext.Authorizer["sub"].(string),
 			Language:  input.Language,
 		}
 
