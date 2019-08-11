@@ -37,8 +37,9 @@ type Result struct {
 
 func wjResult() Result {
 	return Result{
-		Code: "WJ",
-		Text: "Wait for Judge...",
+		Code:       "WJ",
+		Text:       "Wait for Judge...",
+		IsFinished: false,
 	}
 }
 
@@ -84,6 +85,8 @@ func (repo SubmitRepo) Get(ID string) (Submission, error) {
 
 	if submission.Result == (Result{}) {
 		submission.Result = wjResult()
+	} else {
+		submission.Result.IsFinished = true
 	}
 
 	submission.Result.IsFinished = !(submission.Result.Code == "WJ")
@@ -100,6 +103,8 @@ func (repo SubmitRepo) ListByProblemID(ID string) ([]Submission, error) {
 	for index, submission := range submissions {
 		if submission.Result == (Result{}) {
 			submissions[index].Result = wjResult()
+		} else {
+			submissions[index].Result.IsFinished = true
 		}
 	}
 
