@@ -163,7 +163,7 @@ const Submissions: React.FC<
 > = props => {
   if (props.submissions) {
     return (
-      <Table celled padded>
+      <Table celled compact>
         <Table.Header>
           <Table.Row>
             <Table.HeaderCell>ID</Table.HeaderCell>
@@ -177,7 +177,9 @@ const Submissions: React.FC<
           {props.submissions.map(submission => (
             <Table.Row key={submission.id}>
               <Table.Cell>{submission.id}</Table.Cell>
-              <Table.Cell>{submission.created_at}</Table.Cell>
+              <Table.Cell>
+                {new Date(submission.created_at * 1000).toLocaleString()}
+              </Table.Cell>
               <Table.Cell>
                 <BuildBadge
                   status_code={submission.result.status_code}

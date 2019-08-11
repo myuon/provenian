@@ -6,7 +6,9 @@ const badgeColor = (status: string) => {
     return "grey";
   } else if (status === "V") {
     return "green";
-  } else if (status === "red") {
+  } else if (status === "CE") {
+    return "orange";
+  } else {
     return "violet";
   }
 };
