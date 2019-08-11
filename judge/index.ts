@@ -20,6 +20,7 @@ const main = async () => {
     submission_file_path: string;
     subnetId: string;
     vpcId: string;
+    file_domain: string;
   } = JSON.parse(
     (await new AWS.SSM()
       .getParameter({
@@ -153,6 +154,10 @@ const main = async () => {
           {
             Name: "SUBMISSION_FILE_PATH",
             Value: parameters.submission_file_path
+          },
+          {
+            Name: "FILE_DOMAIN",
+            Value: parameters.file_domain
           }
         ],
         LogConfiguration: {
@@ -240,7 +245,7 @@ echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
     cluster: cluster.name,
     taskDefinition: judgeTask.arn,
     launchType: "EC2",
-    desiredCount: 1
+    desiredCount: 0
   });
 };
 

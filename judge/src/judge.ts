@@ -2,13 +2,13 @@ import AWS from "aws-sdk";
 import * as fs from "fs";
 import * as child_process from "child_process";
 import * as path from "path";
+import axios from "axios";
 
 const SUBMISSION_TABLE_NAME = process.env.SUBMISSION_TABLE_NAME;
 const JUDGE_QUEUE_NAME = process.env.JUDGE_QUEUE_NAME;
 const SUBMISSION_FILE_PATH = process.env.SUBMISSION_FILE_PATH;
 const ISABELLE_PATH = process.env.ISABELLE_PATH;
-
-child_process.exec(`ls -la ${ISABELLE_PATH}`);
+const FILE_DOMAIN = process.env.FILE_DOMAIN;
 
 AWS.config.update({
   region: process.env.REGION || "ap-northeast-1"
@@ -38,7 +38,10 @@ const runJudge = async (submissionId: string) => {
     .promise()).Item;
 
   // save code file
-  fs.writeFileSync(SUBMISSION_FILE_PATH, submission.code);
+  fs.writeFileSync(
+    SUBMISSION_FILE_PATH,
+    (await axios.get(`${FILE_DOMAIN}/${submission.code}`)).data
+  );
 
   // verification check
   const result = await new Promise((resolve, reject) => {

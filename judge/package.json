@@ -5,9 +5,10 @@
     "aws-sdk": "^2.505.0"
   },
   "dependencies": {
-    "@pulumi/pulumi": "latest",
     "@pulumi/aws": "latest",
-    "@pulumi/awsx": "latest"
+    "@pulumi/awsx": "latest",
+    "@pulumi/pulumi": "latest",
+    "axios": "^0.19.0"
   },
   "scripts": {
     "docker:push": "sudo docker build . -t myuon/isabelle-judge:latest && sudo docker push myuon/isabelle-judge:latest"
