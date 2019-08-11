@@ -8,6 +8,42 @@ const config = {
   stage: pulumi.getStack()
 };
 
+const storageBucket = new aws.s3.Bucket("storage", {
+  bucketPrefix: `${config.service}-${config.stage}-storage`,
+  corsRules: [
+    {
+      allowedHeaders: ["*"],
+      allowedMethods: ["GET"],
+      allowedOrigins: ["*"]
+    }
+  ]
+});
+
+new aws.s3.BucketPolicy(
+  "storage-policy",
+  {
+    bucket: storageBucket.bucket,
+    policy: storageBucket.bucket.apply(bucketName =>
+      JSON.stringify({
+        Version: "2012-10-17",
+        Id: "S3Policy",
+        Statement: [
+          {
+            Sid: "1",
+            Effect: "Allow",
+            Principal: "*",
+            Action: ["s3:GetObject"],
+            Resource: [`arn:aws:s3:::${bucketName}/*`]
+          }
+        ]
+      })
+    )
+  },
+  {
+    dependsOn: [storageBucket]
+  }
+);
+
 const lambdaRole = (() => {
   const role = new aws.iam.Role("lambda-role", {
     assumeRolePolicy: aws.iam
@@ -32,7 +68,7 @@ const lambdaRole = (() => {
       .getPolicyDocument({
         statements: [
           {
-            actions: ["sqs:*", "dynamodb:*", "logs:*"],
+            actions: ["sqs:*", "s3:*", "dynamodb:*", "logs:*"],
             effect: "Allow",
             resources: ["*"]
           }
@@ -72,26 +108,40 @@ const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
     environment: {
       variables: {
         submitTableName: submitTable.name,
-        judgeQueueName: judgeQueue.name
+        judgeQueueName: judgeQueue.name,
+        storageBucketName: storageBucket.bucket
       }
     }
   }
 });
 
-const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
-  authorization: "NONE",
-  httpMethod: "POST",
-  resource: createCORSResource("submit", {
+const submitAPI = (() => {
+  const problemResource = new aws.apigateway.Resource("problems", {
     parentId: api.rootResourceId,
-    pathPart: "submit",
+    pathPart: "problems",
     restApi: api
-  }),
-  restApi: api,
-  integration: {
-    type: "AWS_PROXY"
-  },
-  handler: submitHandler
-});
+  });
+  const problemIdResource = new aws.apigateway.Resource("problemId", {
+    parentId: problemResource.id,
+    pathPart: "{problemId}",
+    restApi: api
+  });
+
+  return pulumi_extra.apigateway.createLambdaMethod("submit", {
+    authorization: "NONE",
+    httpMethod: "POST",
+    resource: createCORSResource("submit", {
+      parentId: problemIdResource.id,
+      pathPart: "submit",
+      restApi: api
+    }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: submitHandler
+  });
+})();
 
 const getSubmissionAPI = (() => {
   const submissions = new aws.apigateway.Resource("submissions", {
@@ -125,42 +175,6 @@ const apiDeployment = new aws.apigateway.Deployment(
   },
   {
     dependsOn: [submitAPI, getSubmissionAPI]
-  }
-);
-
-const storageBucket = new aws.s3.Bucket("storage", {
-  bucketPrefix: `${config.service}-${config.stage}-storage`,
-  corsRules: [
-    {
-      allowedHeaders: ["*"],
-      allowedMethods: ["GET"],
-      allowedOrigins: ["*"]
-    }
-  ]
-});
-
-new aws.s3.BucketPolicy(
-  "storage-policy",
-  {
-    bucket: storageBucket.bucket,
-    policy: storageBucket.bucket.apply(bucketName =>
-      JSON.stringify({
-        Version: "2012-10-17",
-        Id: "S3Policy",
-        Statement: [
-          {
-            Sid: "1",
-            Effect: "Allow",
-            Principal: "*",
-            Action: ["s3:GetObject"],
-            Resource: [`arn:aws:s3:::${bucketName}/*`]
-          }
-        ]
-      })
-    )
-  },
-  {
-    dependsOn: [storageBucket]
   }
 );
 

@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"github.com/aws/aws-sdk-go/aws"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/satori/go.uuid"
 
@@ -19,9 +21,11 @@ import (
 
 var submitTableName = os.Getenv("submitTableName")
 var judgeQueueName = os.Getenv("judgeQueueName")
+var storageBucketName = os.Getenv("storageBucketName")
 
 type SubmitRepo struct {
-	table dynamo.Table
+	table     dynamo.Table
+	s3service s3.S3
 }
 
 type Result struct {
@@ -41,20 +45,31 @@ func wjResult() Result {
 type Submission struct {
 	ID        string `dynamo:"id" json:"id"`
 	CreatedAt int64  `dynamo:"created_at" json:"created_at"`
+	ProblemID string `dynamo:"problem_id" json:"problem_id"`
 	Code      string `dynamo:"code" json:"code"`
+	Language  string `dynamo:"language" json:"language"`
+	UserID    string `dynamo:"user_id" json:"user_id"`
 	Result    Result `dynamo:"result" json:"result"`
 }
 
-func (repo SubmitRepo) Create(code string) (Submission, error) {
-	submission := Submission{
-		ID:        uuid.Must(uuid.NewV4()).String(),
-		CreatedAt: time.Now().Unix(),
-		Code:      code,
-	}
+func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
+	submission.ID = uuid.Must(uuid.NewV4()).String()
+	submission.CreatedAt = time.Now().Unix()
 
 	if err := repo.table.Put(submission).Run(); err != nil {
 		return Submission{}, err
 	}
+
+	codeFilePath := submission.ProblemID + "/" + submission.ID
+	if _, err := repo.s3service.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(storageBucketName),
+		Key:    aws.String(codeFilePath),
+		Body:   aws.ReadSeekCloser(strings.NewReader(submission.Code)),
+	}); err != nil {
+		return Submission{}, err
+	}
+
+	submission.Code = codeFilePath
 
 	return submission, nil
 }
@@ -76,25 +91,38 @@ func (repo SubmitRepo) Get(ID string) (Submission, error) {
 	return submission, nil
 }
 
-// ---
+type JobQueue struct {
+	queue sqs.SQS
+}
 
-func doPost(submitRepo SubmitRepo, sqsc *sqs.SQS, input string) (events.APIGatewayProxyResponse, error) {
-	submission, err := submitRepo.Create(input)
-	if err != nil {
-		panic(err)
-	}
-
-	out, err := sqsc.GetQueueUrl(&sqs.GetQueueUrlInput{
+func (queue JobQueue) Push(message string) error {
+	out, err := queue.queue.GetQueueUrl(&sqs.GetQueueUrlInput{
 		QueueName: aws.String(judgeQueueName),
 	})
 	if err != nil {
+		return err
+	}
+
+	_, err = queue.queue.SendMessage(&sqs.SendMessageInput{
+		QueueUrl:    out.QueueUrl,
+		MessageBody: aws.String(message),
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ---
+
+func doPost(submitRepo SubmitRepo, queue JobQueue, submissionInput Submission) (events.APIGatewayProxyResponse, error) {
+	submission, err := submitRepo.Create(submissionInput)
+	if err != nil {
 		panic(err)
 	}
 
-	_, err = sqsc.SendMessage(&sqs.SendMessageInput{
-		QueueUrl:    out.QueueUrl,
-		MessageBody: aws.String(submission.ID),
-	})
+	err = queue.Push(submission.ID)
 	if err != nil {
 		panic(err)
 	}
@@ -133,18 +161,36 @@ func doGet(submitRepo SubmitRepo, submissionID string) (events.APIGatewayProxyRe
 	}, nil
 }
 
+type SubmitInput struct {
+	Language string `json:"language"`
+	Code     string `json:"code"`
+}
+
 func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	sess := session.Must(session.NewSession())
 
-	db := dynamo.NewFromIface(dynamodb.New(sess))
-	sqsc := sqs.New(sess)
-
 	submitRepo := SubmitRepo{
-		table: db.Table(submitTableName),
+		table:     dynamo.NewFromIface(dynamodb.New(sess)).Table(submitTableName),
+		s3service: *s3.New(sess),
+	}
+	jobQueue := JobQueue{
+		queue: *sqs.New(sess),
 	}
 
 	if event.HTTPMethod == "POST" {
-		return doPost(submitRepo, sqsc, event.Body)
+		var input SubmitInput
+		if err := json.Unmarshal([]byte(event.Body), &input); err != nil {
+			panic(err)
+		}
+
+		submission := Submission{
+			ProblemID: event.PathParameters["problemId"],
+			Code:      input.Code,
+			UserID:    "",
+			Language:  input.Language,
+		}
+
+		return doPost(submitRepo, jobQueue, submission)
 	} else if event.HTTPMethod == "GET" {
 		return doGet(submitRepo, event.PathParameters["submissionId"])
 	}
