@@ -8,13 +8,15 @@ import {
   Icon,
   Label,
   Tab,
-  Table
+  Table,
+  Button
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import axios from "axios";
 import { RouteComponentProps } from "react-router";
 import { Link } from "react-router-dom";
 import BuildBadge from "./BuildBadge";
+import { useAuth0 } from "../components/Auth0Provider";
 
 export const languages: { [key: string]: { text: string; color: string } } = {
   coq: {
@@ -37,6 +39,11 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
     template: { [key: string]: string };
   });
   const [supportedLangs, setSupportedLangs] = useState([] as string[]);
+  const {
+    isAuthenticated,
+    loginWithRedirect,
+    getTokenSilently
+  } = useAuth0() as any;
 
   useEffect(() => {
     (async () => {
@@ -63,6 +70,11 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
       {
         language,
         code: sourceCode
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${getTokenSilently()}`
+        }
       }
     );
     props.history.push(`/submissions/${result.data.id}`);
@@ -107,28 +119,34 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
         </Accordion>
       </Segment>
 
-      <Form>
-        <Form.Field>
-          <label>Language</label>
-          <Select
-            placeholder="Select language"
-            options={Object.keys(languages).map(name => ({
-              key: name,
-              value: name,
-              text: languages[name].text
-            }))}
-            value={language}
+      {!isAuthenticated ? (
+        <Button primary onClick={() => loginWithRedirect({})}>
+          ログインして解答を提出
+        </Button>
+      ) : (
+        <Form>
+          <Form.Field>
+            <label>Language</label>
+            <Select
+              placeholder="Select language"
+              options={Object.keys(languages).map(name => ({
+                key: name,
+                value: name,
+                text: languages[name].text
+              }))}
+              value={language}
+            />
+          </Form.Field>
+          <Form.Field
+            control={TextareaAutosize}
+            label="Source Code"
+            placeholder="code here..."
+            value={sourceCode}
+            onChange={(event: any) => setSourceCode(event.target.value)}
           />
-        </Form.Field>
-        <Form.Field
-          control={TextareaAutosize}
-          label="Source Code"
-          placeholder="code here..."
-          value={sourceCode}
-          onChange={(event: any) => setSourceCode(event.target.value)}
-        />
-        <Form.Button onClick={submit}>Submit</Form.Button>
-      </Form>
+          <Form.Button onClick={submit}>Submit</Form.Button>
+        </Form>
+      )}
     </>
   );
 };
