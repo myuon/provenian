@@ -64,6 +64,8 @@ const runJudge = async (submissionId: string) => {
         status_text: code === 0 ? "Verified" : "Compilation Error",
         message: fs.readFileSync(stdoutLogFile, "utf8")
       };
+
+      fs.unlinkSync(stdoutLogFile);
       resolve(result);
     });
   });
