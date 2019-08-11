@@ -73,7 +73,7 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
       },
       {
         headers: {
-          Authorization: `Bearer ${getTokenSilently()}`
+          Authorization: `Bearer ${await getTokenSilently()}`
         }
       }
     );
