@@ -6,13 +6,17 @@ import {
   Header,
   Accordion,
   Icon,
-  Label
+  Label,
+  Tab,
+  Table
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import axios from "axios";
 import { RouteComponentProps } from "react-router";
+import { Link } from "react-router-dom";
+import BuildBadge from "./BuildBadge";
 
-const languages: { [key: string]: { text: string; color: string } } = {
+export const languages: { [key: string]: { text: string; color: string } } = {
   coq: {
     text: "Coq",
     color: "grey"
@@ -23,7 +27,7 @@ const languages: { [key: string]: { text: string; color: string } } = {
   }
 };
 
-const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
+const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
   const [sourceCode, setSourceCode] = useState("");
   const [language, setLanguage] = useState("");
   const [problem, setProblem] = useState({} as {
@@ -126,6 +130,89 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
         <Form.Button onClick={submit}>Submit</Form.Button>
       </Form>
     </>
+  );
+};
+
+const Submissions: React.FC<
+  RouteComponentProps<{ problemId: string }> & {
+    submissions?: {
+      id: string;
+      created_at: number;
+      language: string;
+      result: { status_code: string; status_text: string };
+    }[];
+  }
+> = props => {
+  if (props.submissions) {
+    return (
+      <Table celled padded>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell>ID</Table.HeaderCell>
+            <Table.HeaderCell>提出日時</Table.HeaderCell>
+            <Table.HeaderCell>結果</Table.HeaderCell>
+            <Table.HeaderCell />
+          </Table.Row>
+        </Table.Header>
+
+        <Table.Body>
+          {props.submissions.map(submission => (
+            <Table.Row key={submission.id}>
+              <Table.Cell>{submission.id}</Table.Cell>
+              <Table.Cell>{submission.created_at}</Table.Cell>
+              <Table.Cell>
+                <BuildBadge
+                  status_code={submission.result.status_code}
+                  status_text={submission.result.status_text}
+                />
+              </Table.Cell>
+              <Table.Cell>
+                <Link to={`/submissions/${submission.id}`}>詳細</Link>
+              </Table.Cell>
+            </Table.Row>
+          ))}
+        </Table.Body>
+      </Table>
+    );
+  } else {
+    return <div>Now loading...</div>;
+  }
+};
+
+const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
+  const [submissions, setSubmissions] = useState(undefined);
+
+  // A flag for lazy loading
+  const [shouldLoadSubmissions, setShouldLoadSubmissions] = useState(false);
+  useEffect(() => {
+    if (!shouldLoadSubmissions) return;
+
+    (async () => {
+      const result = await axios.get(
+        `${process.env.REACT_APP_API_ENDPOINT}/problems/${
+          props.match.params.problemId
+        }/submissions`
+      );
+
+      setSubmissions(result.data || []);
+    })();
+  }, [props.match.params.problemId, shouldLoadSubmissions]);
+
+  return (
+    <Tab
+      menu={{ secondary: true, pointing: true }}
+      panes={[
+        { menuItem: "問題", render: () => <Content {...props} /> },
+        {
+          menuItem: "提出された解答",
+          render: () => <Submissions {...props} submissions={submissions} />
+        }
+      ]}
+      onTabChange={(_, prop) =>
+        prop.activeIndex !== prop.defaultActiveIndex &&
+        setShouldLoadSubmissions(true)
+      }
+    />
   );
 };
 

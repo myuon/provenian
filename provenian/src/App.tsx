@@ -1,5 +1,5 @@
 import React from "react";
-import { Container, Grid } from "semantic-ui-react";
+import { Container } from "semantic-ui-react";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import Problem from "./view/Problem";
 import Index from "./view/Index";
@@ -13,13 +13,9 @@ const App: React.FC = () => {
         <NavBar />
 
         <Container style={{ marginTop: "50px" }}>
-          <Grid centered>
-            <Grid.Column width={8}>
-              <Route exact path="/" component={Index} />
-              <Route path="/problems/:problemId" component={Problem} />
-              <Route path="/submissions/:submissionId" component={Submission} />
-            </Grid.Column>
-          </Grid>
+          <Route exact path="/" component={Index} />
+          <Route path="/problems/:problemId" component={Problem} />
+          <Route path="/submissions/:submissionId" component={Submission} />
         </Container>
       </div>
     </Router>
