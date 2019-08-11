@@ -21,6 +21,7 @@ const main = async () => {
     subnetId: string;
     vpcId: string;
     file_domain: string;
+    bucket_name: string;
   } = JSON.parse(
     (await new AWS.SSM()
       .getParameter({
@@ -69,7 +70,7 @@ const main = async () => {
             },
             {
               effect: "Allow",
-              actions: ["sqs:*", "dynamodb:*"],
+              actions: ["sqs:*", "dynamodb:*", "s3:*"],
               resources: ["*"]
             }
           ]
@@ -158,6 +159,10 @@ const main = async () => {
           {
             Name: "FILE_DOMAIN",
             Value: parameters.file_domain
+          },
+          {
+            Name: "BUCKET_NAME",
+            Value: parameters.bucket_name
           }
         ],
         LogConfiguration: {

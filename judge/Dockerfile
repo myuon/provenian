@@ -8,6 +8,7 @@ RUN npm install n -g
 RUN n 10
 
 ADD ./ /src
+RUN mkdir /src/isabelle
 WORKDIR /src
 
 # Run judge
