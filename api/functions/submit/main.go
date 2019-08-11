@@ -32,7 +32,7 @@ type Result struct {
 	Code       string `dynamo:"status_code" json:"status_code"`
 	Text       string `dynamo:"status_text" json:"status_text"`
 	Message    string `dynamo:"message" json:"message"`
-	IsFinished bool   `json:"is_finished"`
+	IsFinished bool   `dynamo:"-" json:"is_finished"`
 }
 
 func wjResult() Result {
@@ -97,9 +97,9 @@ func (repo SubmitRepo) ListByProblemID(ID string) ([]Submission, error) {
 		return nil, err
 	}
 
-	for _, submission := range submissions {
+	for index, submission := range submissions {
 		if submission.Result == (Result{}) {
-			submission.Result = wjResult()
+			submissions[index].Result = wjResult()
 		}
 	}
 
