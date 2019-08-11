@@ -24,12 +24,6 @@ const languages: { [key: string]: { text: string; color: string } } = {
 };
 
 const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
-  const ttfont = {
-    "font-family": "Consolas, 'Courier New', Courier, Monaco, monospace",
-    "font-size": "14px",
-    "line-height": "1.2"
-  };
-
   const [sourceCode, setSourceCode] = useState("");
   const [language, setLanguage] = useState("");
   const [problem, setProblem] = useState({} as {
@@ -59,8 +53,13 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
 
   const submit = async () => {
     const result = await axios.post(
-      `${process.env.REACT_APP_API_ENDPOINT}/submit`,
-      sourceCode
+      `${process.env.REACT_APP_API_ENDPOINT}/problems/${
+        props.match.params.problemId
+      }/submit`,
+      {
+        language,
+        code: sourceCode
+      }
     );
     props.history.push(`/submissions/${result.data.id}`);
   };
@@ -121,7 +120,6 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
           control={TextareaAutosize}
           label="Source Code"
           placeholder="code here..."
-          style={{ ttfont }}
           value={sourceCode}
           onChange={(event: any) => setSourceCode(event.target.value)}
         />

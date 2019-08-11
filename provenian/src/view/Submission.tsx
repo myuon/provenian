@@ -31,7 +31,11 @@ const Submission: React.FC<
         }`
       )).data;
 
-      setSource(code);
+      axios
+        .get(`${process.env.REACT_APP_FILE_STORAGE}/${code}`)
+        .then(result => {
+          setSource(result.data);
+        });
       setJudgeResult(result);
 
       const statusCode = result.status_code;
