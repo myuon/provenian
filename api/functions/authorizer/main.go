@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -12,14 +12,15 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/myuon/provenian/api/lib/jwk"
-	"github.com/portals-me/account/lib/jwt"
 )
 
-var jwtPrivateKey = os.Getenv("jwtPrivateKey")
+var audience = os.Getenv("audience")
+var issuer = os.Getenv("issuer")
 var clientSecret = os.Getenv("clientSecret")
 var jwkURL = os.Getenv("jwkURL")
-var pemCache []byte
+var pemCache string
 
 func generatePolicy(principalID, effect, resource string, context map[string]interface{}) events.APIGatewayCustomAuthorizerResponse {
 	authResponse := events.APIGatewayCustomAuthorizerResponse{PrincipalID: principalID}
@@ -41,62 +42,69 @@ func generatePolicy(principalID, effect, resource string, context map[string]int
 	return authResponse
 }
 
-func generateKeyFromSecret(clientSecret string) ([]byte, error) {
-	if len(pemCache) != 0 {
+func getPemCert(token *jwt.Token) (string, error) {
+	if len(pemCache) > 0 {
 		return pemCache, nil
 	}
 
 	resp, err := http.Get(jwkURL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-
 	defer resp.Body.Close()
 
-	byteArray, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
+	var jwks = jwk.Jwks{}
+	if err = json.NewDecoder(resp.Body).Decode(&jwks); err != nil {
+		return "", err
 	}
 
-	var jwkJSON struct {
-		Keys []map[string]string `json:"keys"`
-	}
-	if err := json.Unmarshal([]byte(byteArray), &jwkJSON); err != nil {
-		return nil, err
+	pem := ""
+	for k := range jwks.Keys {
+		if token.Header["kid"] == jwks.Keys[k].Kid {
+			pem = "-----BEGIN CERTIFICATE-----\n" + jwks.Keys[k].X5c[0] + "\n-----END CERTIFICATE-----"
+		}
 	}
 
-	pem, err := jwk.ToPem(jwkJSON.Keys[0])
-	if err != nil {
-		return nil, nil
+	if pem == "" {
+		return "", errors.New("Unable to find appropriate key")
 	}
 
 	pemCache = pem
-
 	return pem, nil
+}
+
+func keyFunction(token *jwt.Token) (interface{}, error) {
+	if ok := token.Claims.(jwt.MapClaims).VerifyAudience(audience, false); !ok {
+		return nil, errors.New("Invalid audience")
+	}
+
+	if ok := token.Claims.(jwt.MapClaims).VerifyIssuer(issuer, false); !ok {
+		return nil, errors.New("Invalid issuer")
+	}
+
+	cert, err := getPemCert(token)
+	if err != nil {
+		return nil, err
+	}
+
+	return jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
 }
 
 func handler(ctx context.Context, request events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
 	token := strings.TrimPrefix(request.AuthorizationToken, "Bearer ")
 
-	key, err := generateKeyFromSecret(clientSecret)
+	verified, err := jwt.Parse(token, keyFunction)
 	if err != nil {
-		panic(err)
-	}
-
-	signer := jwt.ES256Signer{
-		Key: string(key),
-	}
-	verified, err := signer.Verify([]byte(token))
-	if err != nil {
+		fmt.Println(err.Error())
 		return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
 	}
 
-	var user map[string]interface{}
-	if err := json.Unmarshal(verified, &user); err != nil {
-		return events.APIGatewayCustomAuthorizerResponse{}, errors.New("Unauthorized")
-	}
+	payload := verified.Claims.(jwt.MapClaims)
 
-	return generatePolicy(user["sub"].(string), "Allow", request.MethodArn, user), err
+	// Payload hack
+	// `aud` could be a list but it is not allowed as authorizer response
+	payload["aud"] = audience
+	return generatePolicy(payload["sub"].(string), "Allow", request.MethodArn, payload), err
 }
 
 func main() {

@@ -8,6 +8,17 @@ const config = {
   stage: pulumi.getStack()
 };
 
+const parameters: Promise<{
+  clientSecret: string;
+  jwkURL: string;
+  audience: string;
+  issuer: string;
+}> = aws.ssm
+  .getParameter({
+    name: `${config.service}-${config.stage}-env`
+  })
+  .then(result => JSON.parse(result.value));
+
 const storageBucket = new aws.s3.Bucket("storage", {
   bucketPrefix: `${config.service}-${config.stage}-storage`,
   corsRules: [
@@ -116,11 +127,74 @@ const api = new aws.apigateway.RestApi("api", {
   name: `${config.service}-${config.stage}`
 });
 
-const authorizer = pulumi_extra.lambda.createLambdaFunction("authorizer", {
-  filepath: "authorizer",
-  handlerName: `${config.service}-${config.stage}-authorizer`,
-  role: lambdaRole
-});
+const authorizer = (() => {
+  const authorizerRole = new aws.iam.Role("authorizer-role", {
+    assumeRolePolicy: aws.iam
+      .getPolicyDocument({
+        version: "2012-10-17",
+        statements: [
+          {
+            effect: "Allow",
+            principals: [
+              {
+                type: "Service",
+                identifiers: ["apigateway.amazonaws.com"]
+              }
+            ],
+            actions: ["sts:AssumeRole"]
+          }
+        ]
+      })
+      .then(result => result.json)
+  });
+  new aws.iam.RolePolicy("authorizer-role-policy", {
+    role: authorizerRole,
+    policy: aws.iam
+      .getPolicyDocument({
+        version: "2012-10-17",
+        statements: [
+          {
+            effect: "Allow",
+            actions: ["lambda:invokeFunction"],
+            resources: ["*"]
+          }
+        ]
+      })
+      .then(result => result.json)
+  });
+
+  const handler = pulumi_extra.lambda.createLambdaFunction("authorizer", {
+    filepath: "authorizer",
+    handlerName: `${config.service}-${config.stage}-authorizer`,
+    role: lambdaRole,
+    lambdaOptions: {
+      environment: {
+        variables: {
+          clientSecret: parameters.then(ps => ps.clientSecret),
+          jwkURL: parameters.then(ps => ps.jwkURL),
+          audience: parameters.then(ps => ps.audience),
+          issuer: parameters.then(ps => ps.issuer)
+        }
+      }
+    }
+  });
+
+  return new aws.apigateway.Authorizer(
+    "authorizer",
+    {
+      restApi: api,
+      type: "TOKEN",
+      name: `${config.service}-${config.stage}-authorizer`,
+      authorizerUri: pulumi.interpolate`arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${
+        handler.arn
+      }/invocations`,
+      authorizerCredentials: authorizerRole.arn
+    },
+    {
+      dependsOn: [handler, authorizerRole]
+    }
+  );
+})();
 
 const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
   filepath: "submit",

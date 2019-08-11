@@ -9,9 +9,22 @@ import (
 	"math/big"
 )
 
+type Jwks struct {
+	Keys []JSONWebKeys `json:"keys"`
+}
+
+type JSONWebKeys struct {
+	Kty string   `json:"kty"`
+	Kid string   `json:"kid"`
+	Use string   `json:"use"`
+	N   string   `json:"n"`
+	E   string   `json:"e"`
+	X5c []string `json:"x5c"`
+}
+
 // ToPem transforms jwk to pem block
-func ToPem(jwk map[string]string) ([]byte, error) {
-	nb, err := base64.RawURLEncoding.DecodeString(jwk["n"])
+func ToPem(jwk map[string]interface{}) ([]byte, error) {
+	nb, err := base64.RawURLEncoding.DecodeString(jwk["n"].(string))
 	if err != nil {
 		return nil, err
 	}
@@ -20,7 +33,7 @@ func ToPem(jwk map[string]string) ([]byte, error) {
 	if jwk["e"] == "AQAB" || jwk["e"] == "AAEAAQ" {
 		e = 65537
 	} else {
-		panic("need to decode e:" + jwk["e"])
+		panic("need to decode e:" + jwk["e"].(string))
 	}
 
 	pk := &rsa.PublicKey{
