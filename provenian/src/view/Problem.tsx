@@ -55,7 +55,7 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
       setProblem(result);
       setSupportedLangs(Object.keys(result.template));
     })();
-  }, []);
+  }, [props.match.params.problemId]);
 
   const submit = async () => {
     const result = await axios.post(

@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Header, Image } from "semantic-ui-react";
-import top_neko from "../top_neko.jpeg";
 
 const Index: React.FC = () => {
   return (
