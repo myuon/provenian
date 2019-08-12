@@ -33,6 +33,7 @@ const EditProblem: React.FC<
 
   const [content, setContent] = useState("");
   const [templateArray, setTemplateArray] = useState([]);
+  const [title, setTitle] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -48,14 +49,24 @@ const EditProblem: React.FC<
 
       setProblem(result);
 
+      setTitle(result.title);
       setContent(result.content);
       setTemplateArray(Object.entries(result.template));
     })();
   }, [props.match.params.problemId]);
 
+  const submit = () => {
+    console.log({
+      title,
+      content,
+      content_type: "text/markdown",
+      template: Object.fromEntries(templateArray)
+    });
+  };
+
   return (
     <Form>
-      <Form.Input label="タイトル" defaultValue={problem.title} />
+      <Form.Input label="タイトル" defaultValue={problem.title} value={title} />
       <Form.Field>
         <label>本文</label>
         <TextareaAutosize
@@ -127,7 +138,9 @@ const EditProblem: React.FC<
           </Table.Body>
         </Table>
       </Form.Field>
-      <Form.Button primary>Submit</Form.Button>
+      <Form.Button primary onClick={submit}>
+        Submit
+      </Form.Button>
     </Form>
   );
 };
