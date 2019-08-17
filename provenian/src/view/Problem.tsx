@@ -17,6 +17,7 @@ import { RouteComponentProps } from "react-router";
 import { Link } from "react-router-dom";
 import BuildBadge from "./BuildBadge";
 import { useAuth0 } from "../components/Auth0Provider";
+import EditProblem from "./EditProblem";
 
 export const languages: { [key: string]: { text: string; color: string } } = {
   coq: {
@@ -201,6 +202,25 @@ const Submissions: React.FC<
 
 const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
   const [submissions, setSubmissions] = useState(undefined);
+  const [isWriter, setIsWriter] = useState(false);
+
+  const { isAuthenticated, getTokenSilently } = useAuth0() as any;
+
+  useEffect(() => {
+    (async () => {
+      if (!isAuthenticated) return;
+
+      const token = await getTokenSilently();
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const roles = payload[
+        process.env.REACT_APP_AUTH0_ROLE_DOMAIN
+      ] as string[];
+
+      if (roles && roles.includes("writer")) {
+        setIsWriter(true);
+      }
+    })();
+  }, [props.match.params.problemId, isAuthenticated]);
 
   // A flag for lazy loading
   const [shouldLoadSubmissions, setShouldLoadSubmissions] = useState(false);
@@ -226,7 +246,13 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
         {
           menuItem: "提出された解答",
           render: () => <Submissions {...props} submissions={submissions} />
-        }
+        },
+        isWriter
+          ? {
+              menuItem: "この問題を編集",
+              render: () => <EditProblem {...props} />
+            }
+          : undefined
       ]}
       onTabChange={(_, prop) =>
         prop.activeIndex !== prop.defaultActiveIndex &&

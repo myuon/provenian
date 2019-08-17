@@ -16,7 +16,6 @@ const App: React.FC = () => {
         <Container style={{ marginTop: "50px" }}>
           <Route exact path="/" component={Index} />
           <Route exact path="/problems/:problemId" component={Problem} />
-          <Route path="/problems/:problemId/edit" component={EditProblem} />
           <Route path="/submissions/:submissionId" component={Submission} />
         </Container>
       </div>
