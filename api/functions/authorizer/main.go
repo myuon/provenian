@@ -20,6 +20,7 @@ var audience = os.Getenv("audience")
 var issuer = os.Getenv("issuer")
 var clientSecret = os.Getenv("clientSecret")
 var jwkURL = os.Getenv("jwkURL")
+var roleDomain = os.Getenv("roleDomain")
 var pemCache string
 
 func generatePolicy(principalID, effect, resource string, context map[string]interface{}) events.APIGatewayCustomAuthorizerResponse {
@@ -104,6 +105,15 @@ func handler(ctx context.Context, request events.APIGatewayCustomAuthorizerReque
 	// Payload hack
 	// `aud` could be a list but it is not allowed as authorizer response
 	payload["aud"] = audience
+
+	roles := payload[roleDomain].([]interface{})
+	for _, role := range roles {
+		if role.(string) == "writer" {
+			payload["writer"] = true
+		}
+	}
+	payload[roleDomain] = roleDomain
+
 	return generatePolicy(payload["sub"].(string), "Allow", request.MethodArn, payload), err
 }
 

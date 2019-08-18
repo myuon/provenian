@@ -13,6 +13,7 @@ const parameters: Promise<{
   jwkURL: string;
   audience: string;
   issuer: string;
+  roleDomain: string;
 }> = aws.ssm
   .getParameter({
     name: `${config.service}-${config.stage}-env`
@@ -173,7 +174,8 @@ const authorizer = (() => {
           clientSecret: parameters.then(ps => ps.clientSecret),
           jwkURL: parameters.then(ps => ps.jwkURL),
           audience: parameters.then(ps => ps.audience),
-          issuer: parameters.then(ps => ps.issuer)
+          issuer: parameters.then(ps => ps.issuer),
+          roleDomain: parameters.then(ps => ps.roleDomain)
         }
       }
     }
@@ -221,6 +223,38 @@ const problemIdResource = new aws.apigateway.Resource("problemId", {
   pathPart: "{problemId}",
   restApi: api
 });
+
+const editProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "put-problem",
+  {
+    authorization: "CUSTOM",
+    method: {
+      authorizerId: authorizer.id
+    },
+    httpMethod: "PUT",
+    resource: createCORSResource("edit", {
+      parentId: problemIdResource.id,
+      pathPart: "edit",
+      restApi: api
+    }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: pulumi_extra.lambda.createLambdaFunction("problem", {
+      filepath: "problem",
+      handlerName: `${config.service}-${config.stage}-problem`,
+      role: lambdaRole,
+      lambdaOptions: {
+        environment: {
+          variables: {
+            storageBucketName: storageBucket.bucket
+          }
+        }
+      }
+    })
+  }
+);
 
 const submitAPI = pulumi_extra.apigateway.createLambdaMethod("submit", {
   authorization: "CUSTOM",
@@ -289,7 +323,7 @@ const apiDeployment = new aws.apigateway.Deployment(
     stageDescription: new Date().toLocaleString()
   },
   {
-    dependsOn: [submitAPI, getSubmissionAPI, listSubmissionAPI]
+    dependsOn: [submitAPI, getSubmissionAPI, listSubmissionAPI, editProblemAPI]
   }
 );
 
