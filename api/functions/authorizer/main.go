@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -23,17 +24,17 @@ var jwkURL = os.Getenv("jwkURL")
 var roleDomain = os.Getenv("roleDomain")
 var pemCache string
 
-func generatePolicy(principalID, effect, resource string, context map[string]interface{}) events.APIGatewayCustomAuthorizerResponse {
+func generatePolicy(principalID string, effect string, resources []string, context map[string]interface{}) events.APIGatewayCustomAuthorizerResponse {
 	authResponse := events.APIGatewayCustomAuthorizerResponse{PrincipalID: principalID}
 
-	if effect != "" && resource != "" {
+	if effect != "" && len(resources) != 0 {
 		authResponse.PolicyDocument = events.APIGatewayCustomAuthorizerPolicy{
 			Version: "2012-10-17",
 			Statement: []events.IAMPolicyStatement{
 				{
 					Action:   []string{"execute-api:Invoke"},
 					Effect:   effect,
-					Resource: []string{resource},
+					Resource: resources,
 				},
 			},
 		}
@@ -91,6 +92,71 @@ func keyFunction(token *jwt.Token) (interface{}, error) {
 	return jwt.ParseRSAPublicKeyFromPEM([]byte(cert))
 }
 
+func checkAuthority(methodArn string, payload map[string]interface{}) bool {
+	path := ""
+
+	if strings.Contains(methodArn, "/POST/") {
+		path = strings.Split(methodArn, "/POST/")[1]
+	} else if strings.Contains(methodArn, "/PUT/") {
+		path = strings.Split(methodArn, "/PUT/")[1]
+	} else if strings.Contains(methodArn, "/DELETE/") {
+		path = strings.Split(methodArn, "/DELETE/")[1]
+	} else {
+		return true
+	}
+
+	if matched, err := regexp.MatchString(`/problems/(.*)/edit`, path); matched || err != nil {
+		if err != nil {
+			panic(err)
+		}
+
+		return payload["writer"].(bool)
+	}
+
+	return false
+}
+
+func getResourceRoot(methodArn string) string {
+	return strings.Split(strings.Split(strings.Split(strings.Split(strings.Split(methodArn,
+		"/GET/")[0],
+		"/POST/")[0],
+		"/PUT/")[0],
+		"/DELETE/")[0],
+		"/PATCH/")[0]
+}
+
+func getGuestResource(methodArn string) []string {
+	root := getResourceRoot(methodArn)
+	appendRoot := func(xs []string) []string {
+		for i, x := range xs {
+			xs[i] = root + x
+		}
+
+		return xs
+	}
+
+	return appendRoot([]string{
+		"/GET/problems/*/submissions",
+		"/POST/problems/*/submit",
+		"/GET/submissions/*",
+	})
+}
+
+func getWriterResource(methodArn string) []string {
+	root := getResourceRoot(methodArn)
+	appendRoot := func(xs []string) []string {
+		for i, x := range xs {
+			xs[i] = root + x
+		}
+
+		return xs
+	}
+
+	return append(getGuestResource(methodArn), appendRoot([]string{
+		"/PUT/problems/*/edit",
+	})...)
+}
+
 func handler(ctx context.Context, request events.APIGatewayCustomAuthorizerRequest) (events.APIGatewayCustomAuthorizerResponse, error) {
 	token := strings.TrimPrefix(request.AuthorizationToken, "Bearer ")
 
@@ -114,7 +180,11 @@ func handler(ctx context.Context, request events.APIGatewayCustomAuthorizerReque
 	}
 	payload[roleDomain] = roleDomain
 
-	return generatePolicy(payload["sub"].(string), "Allow", request.MethodArn, payload), err
+	if payload["writer"] == true {
+		return generatePolicy(payload["sub"].(string), "Allow", getWriterResource(request.MethodArn), payload), err
+	} else {
+		return generatePolicy(payload["sub"].(string), "Allow", getGuestResource(request.MethodArn), payload), err
+	}
 }
 
 func main() {

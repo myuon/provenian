@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
@@ -128,14 +127,15 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 			}, nil
 		}
 
-		fmt.Println(event.RequestContext.Authorizer)
-		_ = problemRepo
-		//		if err := problemRepo.doUpdate(event.PathParameters["problemId"], event.RequestContext.Authorizer["sub"].(string), input); err != nil {
-		//			panic(err)
-		//		}
+		if err := problemRepo.doUpdate(event.PathParameters["problemId"], event.RequestContext.Authorizer["sub"].(string), input); err != nil {
+			panic(err)
+		}
 
 		return events.APIGatewayProxyResponse{
 			StatusCode: 204,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+			},
 		}, nil
 	}
 
