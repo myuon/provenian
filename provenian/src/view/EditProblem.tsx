@@ -2,16 +2,7 @@ import React, { useState, useEffect, createRef } from "react";
 import { RouteComponentProps } from "react-router";
 import { useAuth0 } from "../components/Auth0Provider";
 import axios from "axios";
-import {
-  Form,
-  Input,
-  Ref,
-  Tab,
-  Segment,
-  Header,
-  Button,
-  Table
-} from "semantic-ui-react";
+import { Form, Segment, Button, Table } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import remark from "remark";
 import reactRenderer from "remark-react";
@@ -55,13 +46,31 @@ const EditProblem: React.FC<
     })();
   }, [props.match.params.problemId]);
 
-  const submit = () => {
+  const submit = async () => {
     console.log({
       title,
       content,
       content_type: "text/markdown",
       template: Object.fromEntries(templateArray)
     });
+
+    const result = await axios.put(
+      `${process.env.REACT_APP_API_ENDPOINT}/problems/${
+        props.match.params.problemId
+      }/edit`,
+      {
+        title,
+        content,
+        content_type: "text/markdown",
+        template: Object.fromEntries(templateArray)
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${await getTokenSilently()}`
+        }
+      }
+    );
+    props.history.push(`/submissions/${result.data.id}`);
   };
 
   return (

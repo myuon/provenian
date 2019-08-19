@@ -5,7 +5,6 @@ import Problem from "./view/Problem";
 import Index from "./view/Index";
 import Submission from "./view/Submission";
 import NavBar from "./view/NavBar";
-import EditProblem from "./view/EditProblem";
 
 const App: React.FC = () => {
   return (

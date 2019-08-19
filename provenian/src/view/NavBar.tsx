@@ -31,7 +31,6 @@ const NavBar = () => {
       return (
         <Dropdown item trigger={userElement}>
           <Dropdown.Menu>
-            <Dropdown.Item>アカウント</Dropdown.Item>
             <Dropdown.Item onClick={() => logout()}>ログアウト</Dropdown.Item>
           </Dropdown.Menu>
         </Dropdown>
