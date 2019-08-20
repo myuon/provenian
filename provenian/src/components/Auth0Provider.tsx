@@ -19,6 +19,7 @@ export const Auth0Provider = ({
   const [auth0Client, setAuth0] = useState();
   const [loading, setLoading] = useState(true);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [isWriter, setIsWriter] = useState(false);
 
   useEffect(() => {
     const initAuth0 = async () => {
@@ -37,6 +38,16 @@ export const Auth0Provider = ({
       if (isAuthenticated) {
         const user = await auth0FromHook.getUser();
         setUser(user);
+      }
+
+      const token = await auth0FromHook.getTokenSilently();
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const roles = payload[
+        process.env.REACT_APP_AUTH0_ROLE_DOMAIN
+      ] as string[];
+
+      if (roles && roles.includes("writer")) {
+        setIsWriter(true);
       }
 
       setLoading(false);
@@ -76,6 +87,7 @@ export const Auth0Provider = ({
         popupOpen,
         loginWithPopup,
         handleRedirectCallback,
+        isWriter,
         getIdTokenClaims: (...p: any) => auth0Client.getIdTokenClaims(...p),
         loginWithRedirect: (...p: any) => auth0Client.loginWithRedirect(...p),
         getTokenSilently: (...p: any) => auth0Client.getTokenSilently(...p),

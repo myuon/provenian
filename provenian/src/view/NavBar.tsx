@@ -9,7 +9,8 @@ const NavBar = () => {
     loginWithRedirect,
     logout,
     loading,
-    user
+    user,
+    isWriter
   } = useAuth0() as any;
 
   const authMenuItem = () => {
@@ -45,7 +46,15 @@ const NavBar = () => {
           <Link to={"/"}>Provenian</Link>
         </Menu.Item>
 
-        <Menu.Menu position="right">{!loading && authMenuItem()}</Menu.Menu>
+        <Menu.Menu position="right">
+          {isWriter && (
+            <Menu.Item>
+              <Link to={"/problem/new"}>問題を作る</Link>
+            </Menu.Item>
+          )}
+
+          {!loading && authMenuItem()}
+        </Menu.Menu>
       </Menu>
     </Segment>
   );

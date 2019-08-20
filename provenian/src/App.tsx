@@ -5,6 +5,7 @@ import Problem from "./view/Problem";
 import Index from "./view/Index";
 import Submission from "./view/Submission";
 import NavBar from "./view/NavBar";
+import NewProblem from "./view/NewProblem";
 
 const App: React.FC = () => {
   return (
@@ -14,6 +15,7 @@ const App: React.FC = () => {
 
         <Container style={{ marginTop: "50px" }}>
           <Route exact path="/" component={Index} />
+          <Route exact path="/problem/new" component={NewProblem} />
           <Route exact path="/problems/:problemId" component={Problem} />
           <Route path="/submissions/:submissionId" component={Submission} />
         </Container>

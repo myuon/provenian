@@ -16,11 +16,7 @@ const EditProblem: React.FC<
     content_type: string;
     template: { [key: string]: string };
   });
-  const {
-    isAuthenticated,
-    loginWithRedirect,
-    getTokenSilently
-  } = useAuth0() as any;
+  const { getTokenSilently } = useAuth0() as any;
 
   const [content, setContent] = useState("");
   const [templateArray, setTemplateArray] = useState([]);
