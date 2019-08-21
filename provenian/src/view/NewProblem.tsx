@@ -9,12 +9,6 @@ import reactRenderer from "remark-react";
 import update from "immutability-helper";
 
 const NewProblem: React.FC = props => {
-  const [problem, setProblem] = useState({} as {
-    title: string;
-    content: string;
-    content_type: string;
-    template: { [key: string]: string };
-  });
   const { getTokenSilently } = useAuth0() as any;
 
   const [title, setTitle] = useState("");
@@ -125,7 +119,7 @@ end`,
     <Form>
       <Form.Input
         label="タイトル"
-        defaultValue={problem.title}
+        defaultValue={title}
         onChange={event => setTitle(event.target.value)}
       />
       <Form.Field>
