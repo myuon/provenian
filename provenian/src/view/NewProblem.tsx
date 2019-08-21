@@ -21,7 +21,7 @@ const NewProblem: React.FC = props => {
   const [content, setContent] = useState("");
   const [templates, dispatchTemplate] = useReducer(
     (
-      state: Array<{ language: string; template: string }>,
+      state: Array<{ language: string; template: string; timestamp: number }>,
       action: {
         type: "append" | "delete" | "update";
         index?: number;
@@ -34,7 +34,8 @@ const NewProblem: React.FC = props => {
             $push: [
               {
                 language: "language",
-                template: "template"
+                template: "template",
+                timestamp: new Date().getTime()
               }
             ]
           });
@@ -56,7 +57,12 @@ const NewProblem: React.FC = props => {
   );
   const [attachments, dispatchAttachments] = useReducer(
     (
-      state: Array<{ language: string; filename: string; code: string }>,
+      state: Array<{
+        language: string;
+        filename: string;
+        code: string;
+        timestamp: number;
+      }>,
       action: {
         type: "append" | "delete" | "update";
         index?: number;
@@ -70,7 +76,8 @@ const NewProblem: React.FC = props => {
               {
                 language: "language",
                 filename: "file",
-                code: "code"
+                code: "code",
+                timestamp: new Date().getTime()
               }
             ]
           });
@@ -96,7 +103,8 @@ const NewProblem: React.FC = props => {
 imports Main
 begin
 
-end`
+end`,
+        timestamp: new Date().getTime()
       }
     ]
   );
@@ -106,9 +114,10 @@ end`
       title,
       content,
       content_type: "text/markdown",
-      template: Object.fromEntries(
+      templates: Object.fromEntries(
         templates.map(value => [value.language, value.template])
-      )
+      ),
+      attachments: attachments
     });
   };
 
@@ -146,8 +155,8 @@ end`
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {templates.map(({ language, template }, index) => (
-              <Table.Row key={index}>
+            {templates.map(({ language, template, timestamp }, index) => (
+              <Table.Row key={timestamp}>
                 <Table.Cell collapsing>
                   <Form.Input
                     defaultValue={language}
@@ -224,61 +233,69 @@ end`
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {attachments.map(({ language, filename, code }, index) => (
-              <Table.Row key={index}>
-                <Table.Cell collapsing>
-                  <Form.Input
-                    defaultValue={language}
-                    onChange={event =>
-                      dispatchAttachments({
-                        type: "update",
-                        value: { type: "language", value: event.target.value },
-                        index
-                      })
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell collapsing>
-                  <Form.Input
-                    defaultValue={filename}
-                    onChange={event =>
-                      dispatchAttachments({
-                        type: "update",
-                        value: { type: "filename", value: event.target.value },
-                        index
-                      })
-                    }
-                  />
-                </Table.Cell>
-                <Table.Cell>
-                  <Form.Field>
-                    <TextareaAutosize
-                      defaultValue={code}
+            {attachments.map(
+              ({ language, filename, code, timestamp }, index) => (
+                <Table.Row key={timestamp}>
+                  <Table.Cell collapsing>
+                    <Form.Input
+                      defaultValue={language}
                       onChange={event =>
                         dispatchAttachments({
                           type: "update",
-                          value: { type: "code", value: event.target.value },
+                          value: {
+                            type: "language",
+                            value: event.target.value
+                          },
                           index
                         })
                       }
                     />
-                  </Form.Field>
-                </Table.Cell>
-                <Table.Cell collapsing>
-                  <Button
-                    color={"red"}
-                    onClick={() =>
-                      dispatchAttachments({
-                        type: "delete",
-                        index
-                      })
-                    }
-                  >
-                    削除
-                  </Button>
-                </Table.Cell>
-              </Table.Row>
-            ))}
+                  </Table.Cell>
+                  <Table.Cell collapsing>
+                    <Form.Input
+                      defaultValue={filename}
+                      onChange={event =>
+                        dispatchAttachments({
+                          type: "update",
+                          value: {
+                            type: "filename",
+                            value: event.target.value
+                          },
+                          index
+                        })
+                      }
+                    />
+                  </Table.Cell>
+                  <Table.Cell>
+                    <Form.Field>
+                      <TextareaAutosize
+                        defaultValue={code}
+                        onChange={event =>
+                          dispatchAttachments({
+                            type: "update",
+                            value: { type: "code", value: event.target.value },
+                            index
+                          })
+                        }
+                      />
+                    </Form.Field>
+                  </Table.Cell>
+                  <Table.Cell collapsing>
+                    <Button
+                      color={"red"}
+                      onClick={() =>
+                        dispatchAttachments({
+                          type: "delete",
+                          index
+                        })
+                      }
+                    >
+                      削除
+                    </Button>
+                  </Table.Cell>
+                </Table.Row>
+              )
+            )}
             <Table.Row>
               <Table.Cell />
               <Table.Cell />
