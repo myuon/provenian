@@ -224,6 +224,65 @@ const problemIdResource = new aws.apigateway.Resource("problemId", {
   restApi: api
 });
 
+const problemTable = new aws.dynamodb.Table("problem", {
+  billingMode: "PAY_PER_REQUEST",
+  name: `${config.service}-${config.stage}-problem`,
+  attributes: [
+    {
+      name: "id",
+      type: "S"
+    },
+    {
+      name: "user_id",
+      type: "S"
+    },
+    {
+      name: "created_at",
+      type: "N"
+    }
+  ],
+  hashKey: "id",
+  globalSecondaryIndexes: [
+    {
+      name: "user_id",
+      hashKey: "user_id",
+      rangeKey: "created_at",
+      projectionType: "ALL"
+    }
+  ]
+});
+
+const problemHandler = pulumi_extra.lambda.createLambdaFunction("problem", {
+  filepath: "problem",
+  handlerName: `${config.service}-${config.stage}-problem`,
+  role: lambdaRole,
+  lambdaOptions: {
+    environment: {
+      variables: {
+        storageBucketName: storageBucket.bucket,
+        problemTableName: problemTable.name
+      }
+    }
+  }
+});
+
+const createProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "create-problem",
+  {
+    authorization: "CUSTOM",
+    method: {
+      authorizerId: authorizer.id
+    },
+    httpMethod: "POST",
+    resource: problemResource,
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: problemHandler
+  }
+);
+
 const editProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
   "put-problem",
   {
@@ -241,18 +300,7 @@ const editProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
     integration: {
       type: "AWS_PROXY"
     },
-    handler: pulumi_extra.lambda.createLambdaFunction("problem", {
-      filepath: "problem",
-      handlerName: `${config.service}-${config.stage}-problem`,
-      role: lambdaRole,
-      lambdaOptions: {
-        environment: {
-          variables: {
-            storageBucketName: storageBucket.bucket
-          }
-        }
-      }
-    })
+    handler: problemHandler
   }
 );
 
@@ -323,7 +371,13 @@ const apiDeployment = new aws.apigateway.Deployment(
     stageDescription: new Date().toLocaleString()
   },
   {
-    dependsOn: [submitAPI, getSubmissionAPI, listSubmissionAPI, editProblemAPI]
+    dependsOn: [
+      submitAPI,
+      getSubmissionAPI,
+      listSubmissionAPI,
+      editProblemAPI,
+      createProblemAPI
+    ]
   }
 );
 
