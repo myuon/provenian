@@ -213,7 +213,7 @@ const submitHandler = pulumi_extra.lambda.createLambdaFunction("submit", {
   }
 });
 
-const problemResource = new aws.apigateway.Resource("problems", {
+const problemResource = createCORSResource("problems", {
   parentId: api.rootResourceId,
   pathPart: "problems",
   restApi: api

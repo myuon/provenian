@@ -154,6 +154,7 @@ func getWriterResource(methodArn string) []string {
 
 	return append(getGuestResource(methodArn), appendRoot([]string{
 		"/PUT/problems/*/edit",
+		"/POST/problems",
 	})...)
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"strings"
 	"time"
@@ -31,19 +32,9 @@ type Problem struct {
 	Content     string            `json:"content"`
 	Template    map[string]string `json:"template"`
 	UpdatedAt   int64             `json:"updated_at"`
-	Writer      []string          `json:"writer"`
+	Writer      string            `json:"writer"`
 	Files       []string          `json:"files"`
 	IsPublic    bool              `json:"is_public"`
-}
-
-func (problem Problem) HasWriter(userID string) bool {
-	for _, value := range problem.Writer {
-		if value == userID {
-			return true
-		}
-	}
-
-	return false
 }
 
 func (repo ProblemRepo) doGet(problemID string) (Problem, error) {
@@ -128,7 +119,7 @@ func (repo ProblemRepo) doCreate(userID string, input CreateProblemInput) error 
 		Content:     input.Content,
 		Template:    input.Template,
 		UpdatedAt:   time.Now().Unix(),
-		Writer:      []string{userID},
+		Writer:      userID,
 		Files:       files,
 		IsPublic:    false,
 	}
@@ -153,8 +144,8 @@ func (repo ProblemRepo) doUpdate(problemID string, userID string, input UpdatePr
 		return err
 	}
 
-	if !prev.HasWriter(userID) {
-		prev.Writer = append(prev.Writer, userID)
+	if prev.Writer != userID {
+		return errors.New("unauthorized")
 	}
 
 	problem := Problem{
