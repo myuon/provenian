@@ -104,15 +104,23 @@ end`,
   );
 
   const submit = async () => {
-    console.log({
-      title,
-      content,
-      content_type: "text/markdown",
-      templates: Object.fromEntries(
-        templates.map(value => [value.language, value.template])
-      ),
-      attachments: attachments
-    });
+    const result = await axios.post(
+      `${process.env.REACT_APP_API_ENDPOINT}/problems`,
+      {
+        title,
+        content,
+        content_type: "text/markdown",
+        templates: Object.fromEntries(
+          templates.map(value => [value.language, value.template])
+        ),
+        attachments: attachments
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${await getTokenSilently()}`
+        }
+      }
+    );
   };
 
   return (

@@ -43,13 +43,6 @@ const EditProblem: React.FC<
   }, [props.match.params.problemId]);
 
   const submit = async () => {
-    console.log({
-      title,
-      content,
-      content_type: "text/markdown",
-      template: Object.fromEntries(templateArray)
-    });
-
     const result = await axios.put(
       `${process.env.REACT_APP_API_ENDPOINT}/problems/${
         props.match.params.problemId
