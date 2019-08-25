@@ -187,9 +187,7 @@ const authorizer = (() => {
       restApi: api,
       type: "TOKEN",
       name: `${config.service}-${config.stage}-authorizer`,
-      authorizerUri: pulumi.interpolate`arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${
-        handler.arn
-      }/invocations`,
+      authorizerUri: pulumi.interpolate`arn:aws:apigateway:ap-northeast-1:lambda:path/2015-03-31/functions/${handler.arn}/invocations`,
       authorizerCredentials: authorizerRole.arn
     },
     {
@@ -233,20 +231,48 @@ const problemTable = new aws.dynamodb.Table("problem", {
       type: "S"
     },
     {
-      name: "user_id",
+      name: "writer",
       type: "S"
     },
     {
-      name: "created_at",
+      name: "updated_at",
       type: "N"
     }
   ],
   hashKey: "id",
   globalSecondaryIndexes: [
     {
-      name: "user_id",
-      hashKey: "user_id",
-      rangeKey: "created_at",
+      name: "writer",
+      hashKey: "writer",
+      rangeKey: "updated_at",
+      projectionType: "ALL"
+    }
+  ]
+});
+
+const problemDraftTable = new aws.dynamodb.Table("problem-draft", {
+  billingMode: "PAY_PER_REQUEST",
+  name: `${config.service}-${config.stage}-problem-draft`,
+  attributes: [
+    {
+      name: "id",
+      type: "S"
+    },
+    {
+      name: "writer",
+      type: "S"
+    },
+    {
+      name: "updated_at",
+      type: "N"
+    }
+  ],
+  hashKey: "id",
+  globalSecondaryIndexes: [
+    {
+      name: "writer",
+      hashKey: "writer",
+      rangeKey: "updated_at",
       projectionType: "ALL"
     }
   ]
@@ -260,7 +286,8 @@ const problemHandler = pulumi_extra.lambda.createLambdaFunction("problem", {
     environment: {
       variables: {
         storageBucketName: storageBucket.bucket,
-        problemTableName: problemTable.name
+        problemTableName: problemTable.name,
+        problemDraftTableName: problemDraftTable.name
       }
     }
   }
@@ -294,6 +321,48 @@ const editProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
     resource: createCORSResource("edit", {
       parentId: problemIdResource.id,
       pathPart: "edit",
+      restApi: api
+    }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: problemHandler
+  }
+);
+
+const publicProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "public-problem",
+  {
+    authorization: "CUSTOM",
+    method: {
+      authorizerId: authorizer.id
+    },
+    httpMethod: "PUT",
+    resource: createCORSResource("public", {
+      parentId: problemIdResource.id,
+      pathPart: "public",
+      restApi: api
+    }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: problemHandler
+  }
+);
+
+const listDraftProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "list-draft-problem",
+  {
+    authorization: "CUSTOM",
+    method: {
+      authorizerId: authorizer.id
+    },
+    httpMethod: "GET",
+    resource: createCORSResource("drafts", {
+      parentId: problemResource.id,
+      pathPart: "drafts",
       restApi: api
     }),
     restApi: api,
@@ -376,7 +445,9 @@ const apiDeployment = new aws.apigateway.Deployment(
       getSubmissionAPI,
       listSubmissionAPI,
       editProblemAPI,
-      createProblemAPI
+      createProblemAPI,
+      publicProblemAPI,
+      listDraftProblemAPI
     ]
   }
 );

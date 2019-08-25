@@ -1,6 +1,6 @@
 module github.com/myuon/provenian/api
 
-go 1.12
+go 1.12.9
 
 require (
 	github.com/aws/aws-lambda-go v1.12.1
