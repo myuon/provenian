@@ -25,9 +25,7 @@ const EditProblem: React.FC<
   useEffect(() => {
     (async () => {
       const { version, ...result } = (await axios.get(
-        `${process.env.REACT_APP_FILE_STORAGE}/${
-          props.match.params.problemId
-        }.json`
+        `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}.json`
       )).data;
 
       if (version !== "1.0") {
@@ -38,15 +36,15 @@ const EditProblem: React.FC<
 
       setTitle(result.title);
       setContent(result.content);
-      setTemplateArray(Object.entries(result.template));
+      if (result.template) {
+        setTemplateArray(Object.entries(result.template));
+      }
     })();
   }, [props.match.params.problemId]);
 
   const submit = async () => {
     const result = await axios.put(
-      `${process.env.REACT_APP_API_ENDPOINT}/problems/${
-        props.match.params.problemId
-      }/edit`,
+      `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/edit`,
       {
         title,
         content,

@@ -1,8 +1,27 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Header, Image, Grid } from "semantic-ui-react";
+import axios from "axios";
+import { useAuth0 } from "../components/Auth0Provider";
 
 const Index: React.FC = () => {
+  const { isAuthenticated, getTokenSilently } = useAuth0() as any;
+  useEffect(() => {
+    (async () => {
+      if (!isAuthenticated) return;
+
+      const result = await axios.get(
+        `${process.env.REACT_APP_API_ENDPOINT}/problems`,
+        {
+          headers: {
+            Authorization: `Bearer ${await getTokenSilently()}`
+          }
+        }
+      );
+      console.log(result.data);
+    })();
+  }, [isAuthenticated]);
+
   return (
     <Grid centered>
       <Grid.Row>

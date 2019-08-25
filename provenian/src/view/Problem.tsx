@@ -57,7 +57,9 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
       }
 
       setProblem(result);
-      setSupportedLangs(Object.keys(result.template));
+      if (result.template) {
+        setSupportedLangs(Object.keys(result.template));
+      }
     })();
   }, [props.match.params.problemId]);
 

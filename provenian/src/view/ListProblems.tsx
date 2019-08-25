@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Table } from "semantic-ui-react";
 import axios from "axios";
 import { useAuth0 } from "../components/Auth0Provider";
+import { Link } from "react-router-dom";
 
 const ListProblems: React.FC = props => {
   const { isAuthenticated, getTokenSilently } = useAuth0() as any;
@@ -22,7 +23,6 @@ const ListProblems: React.FC = props => {
         }
       );
 
-      console.log(result.data);
       if (result.data) {
         setProblems(result.data);
       }
@@ -35,14 +35,15 @@ const ListProblems: React.FC = props => {
         <Table.Row>
           <Table.HeaderCell>問題タイトル</Table.HeaderCell>
           <Table.HeaderCell>更新日時</Table.HeaderCell>
-          <Table.HeaderCell />
         </Table.Row>
       </Table.Header>
 
       <Table.Body>
         {problems.map(problem => (
           <Table.Row key={problem.updated_at}>
-            <Table.Cell>{problem.title}</Table.Cell>
+            <Table.Cell>
+              <Link to={`/problems/${problem.id}`}>{problem.title}</Link>
+            </Table.Cell>
             <Table.Cell>
               {new Date(problem.updated_at * 1000).toLocaleString()}
             </Table.Cell>
