@@ -43,7 +43,9 @@ const ListProblems: React.FC = props => {
         {problems.map(problem => (
           <Table.Row key={problem.updated_at}>
             <Table.Cell>{problem.title}</Table.Cell>
-            <Table.Cell>{problem.updated_at}</Table.Cell>
+            <Table.Cell>
+              {new Date(problem.updated_at * 1000).toLocaleString()}
+            </Table.Cell>
           </Table.Row>
         ))}
       </Table.Body>
