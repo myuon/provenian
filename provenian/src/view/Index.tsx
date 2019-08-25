@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Header, Image, Grid } from "semantic-ui-react";
 import axios from "axios";
 import { useAuth0 } from "../components/Auth0Provider";
+import ListProblems from "./ListProblems";
 
 const Index: React.FC = () => {
   const { isAuthenticated, getTokenSilently } = useAuth0() as any;

@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import BuildBadge from "./BuildBadge";
 import { useAuth0 } from "../components/Auth0Provider";
 import EditProblem from "./EditProblem";
+import ShowProblem from "./problem/ShowProblem";
 
 export const languages: { [key: string]: { text: string; color: string } } = {
   coq: {
@@ -30,7 +31,9 @@ export const languages: { [key: string]: { text: string; color: string } } = {
   }
 };
 
-const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
+const Content: React.FC<
+  RouteComponentProps<{ problemId: string }> & { draft: boolean }
+> = props => {
   const [sourceCode, setSourceCode] = useState("");
   const [language, setLanguage] = useState("");
   const [problem, setProblem] = useState({} as {
@@ -50,7 +53,7 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
     (async () => {
       const { version, ...result } = (await axios.get(
         `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}${
-          props.match.path.endsWith("/draft") ? ".draft" : ""
+          props.draft ? ".draft" : ""
         }.json`
       )).data;
 
@@ -82,73 +85,13 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
   };
 
   return (
-    <>
-      <Header as="h2">{problem.title}</Header>
-      <p>{problem.content}</p>
-
-      <div>
-        <span>対応言語:</span>
-        {supportedLangs.map(lang => (
-          <Label key={lang} color={languages[lang].color as any}>
-            {lang}
-          </Label>
-        ))}
-      </div>
-
-      <p>検証時間制限: 10sec / メモリ上限: 1500MB</p>
-
-      <Header as="h4">言語テンプレート</Header>
-      <p>ソースコードは次のテンプレートに従って提出せよ。</p>
-
-      <Segment>
-        <Accordion>
-          {supportedLangs.map(lang => (
-            <div key={lang}>
-              <Accordion.Title
-                active={language === lang}
-                index={lang}
-                onClick={() => setLanguage(language === lang ? "" : lang)}
-              >
-                <Icon name="dropdown" />
-                {languages[lang].text}
-              </Accordion.Title>
-              <Accordion.Content active={language === lang}>
-                <pre>{problem.template[lang]}</pre>
-              </Accordion.Content>
-            </div>
-          ))}
-        </Accordion>
-      </Segment>
-
-      {!isAuthenticated ? (
-        <Button primary onClick={() => loginWithRedirect({})}>
-          ログインして解答を提出
-        </Button>
-      ) : (
-        <Form>
-          <Form.Field>
-            <label>Language</label>
-            <Select
-              placeholder="Select language"
-              options={Object.keys(languages).map(name => ({
-                key: name,
-                value: name,
-                text: languages[name].text
-              }))}
-              value={language}
-            />
-          </Form.Field>
-          <Form.Field
-            control={TextareaAutosize}
-            label="Source Code"
-            placeholder="code here..."
-            value={sourceCode}
-            onChange={(event: any) => setSourceCode(event.target.value)}
-          />
-          <Form.Button onClick={submit}>Submit</Form.Button>
-        </Form>
-      )}
-    </>
+    <ShowProblem
+      problem={problem}
+      languages={[]}
+      isAuthenticated={isAuthenticated}
+      onLogin={loginWithRedirect}
+      onSubmit={submit}
+    />
   );
 };
 
@@ -200,7 +143,9 @@ const Submissions: React.FC<
   }
 };
 
-const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
+const Problem: React.FC<
+  RouteComponentProps<{ problemId: string }> & { draft: boolean }
+> = props => {
   const [submissions, setSubmissions] = useState(undefined);
   const { isWriter } = useAuth0() as any;
 
@@ -222,7 +167,7 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
     <Tab
       menu={{ secondary: true, pointing: true }}
       panes={[
-        { menuItem: "問題", render: () => <Content {...props} /> },
+        { menuItem: "問題", render: () => <Content draft={true} {...props} /> },
         {
           menuItem: "提出された解答",
           render: () => <Submissions {...props} submissions={submissions} />
