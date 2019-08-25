@@ -116,6 +116,27 @@ func (repo ProblemRepo) saveAttachment(problemID string, language string, filena
 	return nil
 }
 
+func (repo ProblemRepo) publishIndex() error {
+	var problems []Problem
+	if err := repo.problemTable.Scan().All(&problems); err != nil {
+		return err
+	}
+	body, err := json.Marshal(problems)
+	if err != nil {
+		return err
+	}
+
+	if _, err := repo.s3c.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(storageBucketName),
+		Key:    aws.String("index.json"),
+		Body:   aws.ReadSeekCloser(strings.NewReader(string(body))),
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type Attachment struct {
 	Code     string `json:"code"`
 	Filename string `json:"filename"`
@@ -208,7 +229,11 @@ func (repo ProblemRepo) doPublic(userID string, problemID string) error {
 		return err
 	}
 
-	return repo.doPut(problemID, problem, false)
+	if err := repo.doPut(problemID, problem, false); err != nil {
+		return err
+	}
+
+	return repo.publishIndex()
 }
 
 func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
