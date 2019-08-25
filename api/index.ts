@@ -352,7 +352,7 @@ const publicProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
   }
 );
 
-const listDraftProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+const listDraftAPI = pulumi_extra.apigateway.createLambdaMethod(
   "list-draft-problem",
   {
     authorization: "CUSTOM",
@@ -365,6 +365,23 @@ const listDraftProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
       pathPart: "drafts",
       restApi: api
     }),
+    restApi: api,
+    integration: {
+      type: "AWS_PROXY"
+    },
+    handler: problemHandler
+  }
+);
+
+const listProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "list-problem",
+  {
+    authorization: "CUSTOM",
+    method: {
+      authorizerId: authorizer.id
+    },
+    httpMethod: "GET",
+    resource: problemResource,
     restApi: api,
     integration: {
       type: "AWS_PROXY"
@@ -447,7 +464,8 @@ const apiDeployment = new aws.apigateway.Deployment(
       editProblemAPI,
       createProblemAPI,
       publicProblemAPI,
-      listDraftProblemAPI
+      listDraftAPI,
+      listProblemAPI
     ]
   }
 );

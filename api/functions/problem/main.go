@@ -30,7 +30,7 @@ type ProblemRepo struct {
 }
 
 type Problem struct {
-	ID          string            `json:"-" dynamo:"id"`
+	ID          string            `json:"id" dynamo:"id"`
 	Version     string            `json:"version" dynamo:"version"`
 	Title       string            `json:"title" dynamo:"title"`
 	ContentType string            `json:"content_type" dynamo:"-"`
@@ -195,7 +195,7 @@ func (repo ProblemRepo) doUpdate(problemID string, userID string, input UpdatePr
 
 func (repo ProblemRepo) doListWriterProblems(userID string, draft bool) ([]Problem, error) {
 	var problems []Problem
-	if err := repo.problemTable.Get("writer", userID).Index("writer").All(&problems); err != nil {
+	if err := repo.draftTable.Get("writer", userID).Index("writer").All(&problems); err != nil {
 		return nil, err
 	}
 

@@ -139,6 +139,7 @@ func getGuestResource(methodArn string) []string {
 		"/GET/problems/*/submissions",
 		"/POST/problems/*/submit",
 		"/GET/submissions/*",
+		"/GET/problems",
 	})
 }
 
