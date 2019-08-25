@@ -48,9 +48,14 @@ const NavBar = () => {
 
         <Menu.Menu position="right">
           {isWriter && (
-            <Menu.Item>
-              <Link to={"/problem/new"}>問題を作る</Link>
-            </Menu.Item>
+            <>
+              <Menu.Item>
+                <Link to={"/me/problems"}>自作の問題</Link>
+              </Menu.Item>
+              <Menu.Item>
+                <Link to={"/problem/new"}>問題を作る</Link>
+              </Menu.Item>
+            </>
           )}
 
           {!loading && authMenuItem()}

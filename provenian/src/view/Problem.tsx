@@ -49,9 +49,7 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
   useEffect(() => {
     (async () => {
       const { version, ...result } = (await axios.get(
-        `${process.env.REACT_APP_FILE_STORAGE}/${
-          props.match.params.problemId
-        }.json`
+        `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}.json`
       )).data;
 
       if (version !== "1.0") {
@@ -65,9 +63,7 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
 
   const submit = async () => {
     const result = await axios.post(
-      `${process.env.REACT_APP_API_ENDPOINT}/problems/${
-        props.match.params.problemId
-      }/submit`,
+      `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/submit`,
       {
         language,
         code: sourceCode
@@ -211,9 +207,7 @@ const Problem: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
 
     (async () => {
       const result = await axios.get(
-        `${process.env.REACT_APP_API_ENDPOINT}/problems/${
-          props.match.params.problemId
-        }/submissions`
+        `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/submissions`
       );
 
       setSubmissions(result.data || []);
