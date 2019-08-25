@@ -10,15 +10,10 @@ const Index: React.FC = () => {
     (async () => {
       if (!isAuthenticated) return;
 
-      const result = await axios.get(
-        `${process.env.REACT_APP_API_ENDPOINT}/problems`,
-        {
-          headers: {
-            Authorization: `Bearer ${await getTokenSilently()}`
-          }
-        }
+      console.log(
+        (await axios.get(`${process.env.REACT_APP_FILE_STORAGE}/index.json`))
+          .data
       );
-      console.log(result.data);
     })();
   }, [isAuthenticated]);
 

@@ -49,7 +49,9 @@ const Content: React.FC<RouteComponentProps<{ problemId: string }>> = props => {
   useEffect(() => {
     (async () => {
       const { version, ...result } = (await axios.get(
-        `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}.json`
+        `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}${
+          props.match.path.endsWith("/draft") ? ".draft" : ""
+        }.json`
       )).data;
 
       if (version !== "1.0") {

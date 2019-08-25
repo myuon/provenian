@@ -26,34 +26,38 @@ export const Auth0Provider = ({
       const auth0FromHook = await createAuth0Client(initOptions);
       setAuth0(auth0FromHook);
 
-      if (window.location.search.includes("code=")) {
-        const { appState } = await auth0FromHook.handleRedirectCallback();
-        onRedirectCallback(appState);
+      try {
+        if (window.location.search.includes("code=")) {
+          const { appState } = await auth0FromHook.handleRedirectCallback();
+          onRedirectCallback(appState);
+        }
+
+        const isAuthenticated = await auth0FromHook.isAuthenticated();
+
+        setIsAuthenticated(isAuthenticated);
+
+        if (isAuthenticated) {
+          const user = await auth0FromHook.getUser();
+          setUser(user);
+        }
+
+        const token = await auth0FromHook.getTokenSilently();
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const roles = payload[
+          process.env.REACT_APP_AUTH0_ROLE_DOMAIN
+        ] as string[];
+
+        if (roles && roles.includes("writer")) {
+          setIsWriter(true);
+        }
+
+        setLoading(false);
+      } catch (err) {
+        console.log(err);
+        auth0FromHook.loginWithRedirect();
       }
-
-      const isAuthenticated = await auth0FromHook.isAuthenticated();
-
-      setIsAuthenticated(isAuthenticated);
-
-      if (isAuthenticated) {
-        const user = await auth0FromHook.getUser();
-        setUser(user);
-      }
-
-      const token = await auth0FromHook.getTokenSilently();
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const roles = payload[
-        process.env.REACT_APP_AUTH0_ROLE_DOMAIN
-      ] as string[];
-
-      if (roles && roles.includes("writer")) {
-        setIsWriter(true);
-      }
-
-      setLoading(false);
     };
     initAuth0();
-    // eslint-disable-next-line
   }, []);
 
   const loginWithPopup = async (params = {}) => {

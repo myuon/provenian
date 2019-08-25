@@ -18,7 +18,9 @@ const App: React.FC = () => {
           <Route exact path="/" component={Index} />
           <Route exact path="/me/problems" component={ListProblems} />
           <Route exact path="/problem/new" component={NewProblem} />
+          <Route exact path="/problems" component={ListProblems} />
           <Route exact path="/problems/:problemId" component={Problem} />
+          <Route exact path="/problems/:problemId/draft" component={Problem} />
           <Route path="/submissions/:submissionId" component={Submission} />
         </Container>
       </div>

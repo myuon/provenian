@@ -42,7 +42,7 @@ const ListProblems: React.FC = props => {
         {problems.map(problem => (
           <Table.Row key={problem.updated_at}>
             <Table.Cell>
-              <Link to={`/problems/${problem.id}`}>{problem.title}</Link>
+              <Link to={`/problems/${problem.id}/draft`}>{problem.title}</Link>
             </Table.Cell>
             <Table.Cell>
               {new Date(problem.updated_at * 1000).toLocaleString()}
