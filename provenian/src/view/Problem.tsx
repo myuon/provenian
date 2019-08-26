@@ -91,6 +91,7 @@ const Content: React.FC<
       isAuthenticated={isAuthenticated}
       onLogin={loginWithRedirect}
       onSubmit={submit}
+      draft={props.draft}
     />
   );
 };
@@ -167,15 +168,20 @@ const Problem: React.FC<
     <Tab
       menu={{ secondary: true, pointing: true }}
       panes={[
-        { menuItem: "問題", render: () => <Content draft={true} {...props} /> },
         {
-          menuItem: "提出された解答",
-          render: () => <Submissions {...props} submissions={submissions} />
+          menuItem: "問題",
+          render: () => <Content draft={props.draft} {...props} />
         },
+        !props.draft
+          ? {
+              menuItem: "提出された解答",
+              render: () => <Submissions {...props} submissions={submissions} />
+            }
+          : undefined,
         isWriter
           ? {
               menuItem: "この問題を編集",
-              render: () => <EditProblem {...props} />
+              render: () => <EditProblem draft={props.draft} {...props} />
             }
           : undefined
       ]}

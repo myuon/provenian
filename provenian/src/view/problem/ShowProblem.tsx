@@ -7,7 +7,8 @@ import {
   Icon,
   Button,
   Form,
-  Select
+  Select,
+  Message
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -17,6 +18,7 @@ const ShowProblem: React.FC<{
   isAuthenticated?: boolean;
   onLogin: () => void;
   onSubmit: (arg: { language: string; sourceCode: string }) => void;
+  draft: boolean;
 }> = props => {
   const problem = props.problem;
   const isAuthenticated = props.isAuthenticated || false;
@@ -27,6 +29,10 @@ const ShowProblem: React.FC<{
 
   return (
     <>
+      <Message>
+        <p>この問題は現在下書きの状態です。</p>
+      </Message>
+
       <Header as="h2">{problem.title}</Header>
       <p>{problem.content}</p>
 
@@ -92,8 +98,11 @@ const ShowProblem: React.FC<{
             value={sourceCode}
             onChange={(event: any) => setSourceCode(event.target.value)}
           />
-          <Form.Button onClick={() => props.onSubmit({ language, sourceCode })}>
-            Submit
+          <Form.Button
+            primary
+            onClick={() => props.onSubmit({ language, sourceCode })}
+          >
+            提出
           </Form.Button>
         </Form>
       )}

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, createRef } from "react";
-import { Form, Segment, Button, Table } from "semantic-ui-react";
+import React, { useState } from "react";
+import { Form, Segment, Button, Table, Message } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import remark from "remark";
 import reactRenderer from "remark-react";
@@ -14,6 +14,7 @@ interface ProblemDetail {
 const ProblemForm: React.FC<{
   problem: ProblemDetail;
   onSubmit: () => void;
+  draft: boolean;
 }> = props => {
   const [content, setContent] = useState("");
   const [templateArray, setTemplateArray] = useState([]);
@@ -21,6 +22,10 @@ const ProblemForm: React.FC<{
 
   return (
     <Form>
+      <Message>
+        <p>この問題は現在下書きの状態です。</p>
+      </Message>
+
       <Form.Input
         label="タイトル"
         defaultValue={props.problem.title}

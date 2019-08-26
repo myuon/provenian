@@ -59,7 +59,13 @@ const EditProblem: React.FC<
     props.history.push(`/submissions/${result.data.id}`);
   };
 
-  return <ProblemForm problem={problem} onSubmit={submit}></ProblemForm>;
+  return (
+    <ProblemForm
+      draft={props.draft}
+      problem={problem}
+      onSubmit={submit}
+    ></ProblemForm>
+  );
 };
 
 export default EditProblem;
