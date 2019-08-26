@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/guregu/dynamo"
+	"github.com/pkg/errors"
 	"github.com/satori/go.uuid"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -119,11 +120,12 @@ func (repo ProblemRepo) saveAttachment(problemID string, language string, filena
 func (repo ProblemRepo) publishIndex() error {
 	var problems []Problem
 	if err := repo.problemTable.Scan().All(&problems); err != nil {
-		return err
+		return errors.Wrap(err, "failed to scan")
 	}
+
 	body, err := json.Marshal(problems)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to marshal")
 	}
 
 	if _, err := repo.s3c.PutObject(&s3.PutObjectInput{
@@ -131,7 +133,7 @@ func (repo ProblemRepo) publishIndex() error {
 		Key:    aws.String("index.json"),
 		Body:   aws.ReadSeekCloser(strings.NewReader(string(body))),
 	}); err != nil {
-		return err
+		return errors.Wrap(err, "failed to put object")
 	}
 
 	return nil
@@ -223,14 +225,14 @@ func (repo ProblemRepo) doListWriterProblems(userID string, draft bool) ([]Probl
 	return problems, nil
 }
 
-func (repo ProblemRepo) doPublic(userID string, problemID string) error {
+func (repo ProblemRepo) doPublish(problemID string, userID string) error {
 	problem, err := repo.doGet(problemID, true)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to get")
 	}
 
 	if err := repo.doPut(problemID, problem, false); err != nil {
-		return err
+		return errors.Wrap(err, "failed to put")
 	}
 
 	return repo.publishIndex()
@@ -246,7 +248,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		draftTable:   ddb.Table(problemDraftTableName),
 	}
 
-	if event.HTTPMethod == "PUT" {
+	if event.Resource == "/problems/{problemId}/edit" && event.HTTPMethod == "PUT" {
 		var input UpdateProblemInput
 		if err := json.Unmarshal([]byte(event.Body), &input); err != nil {
 			return events.APIGatewayProxyResponse{
@@ -255,6 +257,18 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 		}
 
 		if err := problemRepo.doUpdate(event.PathParameters["problemId"], event.RequestContext.Authorizer["sub"].(string), input); err != nil {
+			panic(err)
+		}
+
+		return events.APIGatewayProxyResponse{
+			StatusCode: 204,
+			Headers: map[string]string{
+				"Access-Control-Allow-Origin": "*",
+			},
+		}, nil
+	} else if event.Resource == "/problems/{problemId}/publish" && event.HTTPMethod == "PUT" {
+		if err := problemRepo.doPublish(event.PathParameters["problemId"], event.RequestContext.Authorizer["sub"].(string)); err != nil {
+			fmt.Printf("%+v", err)
 			panic(err)
 		}
 

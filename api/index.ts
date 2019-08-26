@@ -331,17 +331,17 @@ const editProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
   }
 );
 
-const publicProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
-  "public-problem",
+const publishProblemAPI = pulumi_extra.apigateway.createLambdaMethod(
+  "publish-problem",
   {
     authorization: "CUSTOM",
     method: {
       authorizerId: authorizer.id
     },
     httpMethod: "PUT",
-    resource: createCORSResource("public", {
+    resource: createCORSResource("publish", {
       parentId: problemIdResource.id,
-      pathPart: "public",
+      pathPart: "publish",
       restApi: api
     }),
     restApi: api,
@@ -446,7 +446,7 @@ const apiDeployment = new aws.apigateway.Deployment(
       listSubmissionAPI,
       editProblemAPI,
       createProblemAPI,
-      publicProblemAPI,
+      publishProblemAPI,
       listDraftAPI
     ]
   }

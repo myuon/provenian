@@ -157,6 +157,7 @@ func getWriterResource(methodArn string) []string {
 		"/PUT/problems/*/edit",
 		"/POST/problems",
 		"/GET/problems/drafts",
+		"/PUT/problems/*/publish",
 	})...)
 }
 
