@@ -59,11 +59,24 @@ const EditProblem: React.FC<
     props.history.push(`/submissions/${result.data.id}`);
   };
 
+  const publish = async () => {
+    const result = await axios.put(
+      `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/publish`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${await getTokenSilently()}`
+        }
+      }
+    );
+  };
+
   return (
     <ProblemForm
       draft={props.draft}
       problem={problem}
       onSubmit={submit}
+      onPublish={publish}
     ></ProblemForm>
   );
 };

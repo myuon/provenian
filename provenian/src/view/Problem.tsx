@@ -1,17 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Segment,
-  Form,
-  Select,
-  Header,
-  Accordion,
-  Icon,
-  Label,
-  Tab,
-  Table,
-  Button
-} from "semantic-ui-react";
-import TextareaAutosize from "react-textarea-autosize";
+import { Tab, Table } from "semantic-ui-react";
 import axios from "axios";
 import { RouteComponentProps } from "react-router";
 import { Link } from "react-router-dom";

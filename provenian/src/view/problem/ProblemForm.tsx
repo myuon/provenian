@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Form, Segment, Button, Table, Message } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import remark from "remark";
@@ -13,12 +13,26 @@ interface ProblemDetail {
 
 const ProblemForm: React.FC<{
   problem: ProblemDetail;
-  onSubmit: () => void;
   draft: boolean;
+  onSubmit: (arg: {
+    title: string;
+    content: string;
+    template: { [key: string]: string };
+  }) => void;
+  onPublish?: () => void;
 }> = props => {
   const [content, setContent] = useState("");
   const [templateArray, setTemplateArray] = useState([]);
   const [title, setTitle] = useState("");
+
+  useEffect(() => {
+    setContent(props.problem.content);
+    setTitle(props.problem.title);
+
+    if (props.problem.template) {
+      setTemplateArray(Object.entries(props.problem.template));
+    }
+  }, [props.problem]);
 
   return (
     <Form>
@@ -28,13 +42,13 @@ const ProblemForm: React.FC<{
 
       <Form.Input
         label="タイトル"
-        defaultValue={props.problem.title}
+        defaultValue={title}
         onChange={event => setTitle(event.target.value)}
       />
       <Form.Field>
         <label>本文</label>
         <TextareaAutosize
-          defaultValue={props.problem.content}
+          value={content}
           onChange={event => setContent(event.target.value)}
         />
         <Segment secondary>
@@ -102,9 +116,23 @@ const ProblemForm: React.FC<{
           </Table.Body>
         </Table>
       </Form.Field>
-      <Form.Button primary onClick={props.onSubmit}>
+      {props.draft && (
+        <Button secondary onClick={() => props.onPublish()}>
+          問題を公開
+        </Button>
+      )}
+      <Button
+        primary
+        onClick={() =>
+          props.onSubmit({
+            title,
+            content,
+            template: Object.fromEntries(templateArray)
+          })
+        }
+      >
         保存
-      </Form.Button>
+      </Button>
     </Form>
   );
 };
