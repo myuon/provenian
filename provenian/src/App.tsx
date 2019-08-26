@@ -16,7 +16,11 @@ const App: React.FC = () => {
 
         <Container style={{ marginTop: "50px" }}>
           <Route exact path="/" component={Index} />
-          <Route exact path="/me/problems" component={ListProblems} />
+          <Route
+            exact
+            path="/me/problems"
+            render={props => <ListProblems draft={true} {...props} />}
+          />
           <Route
             exact
             path="/me/problems/:problemId"
@@ -24,7 +28,11 @@ const App: React.FC = () => {
           />
           <Route exact path="/problem/new" component={NewProblem} />
           <Route exact path="/problems" component={ListProblems} />
-          <Route exact path="/problems/:problemId" component={Problem} />
+          <Route
+            exact
+            path="/problems/:problemId"
+            render={props => <Problem draft={false} {...props} />}
+          />
           <Route path="/submissions/:submissionId" component={Submission} />
         </Container>
       </div>

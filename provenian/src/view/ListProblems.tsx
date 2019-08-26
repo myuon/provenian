@@ -4,27 +4,35 @@ import axios from "axios";
 import { useAuth0 } from "../components/Auth0Provider";
 import { Link } from "react-router-dom";
 
-const ListProblems: React.FC = props => {
+const ListProblems: React.FC<{ draft: boolean }> = props => {
   const { isAuthenticated, getTokenSilently } = useAuth0() as any;
   const [problems, setProblems] = useState([]);
 
   useEffect(() => {
     (async () => {
-      if (!isAuthenticated) {
-        return;
-      }
+      if (!props.draft) {
+        const result = await axios.get(
+          `${process.env.REACT_APP_FILE_STORAGE}/index.json`
+        );
 
-      const result = await axios.get(
-        `${process.env.REACT_APP_API_ENDPOINT}/problems/drafts`,
-        {
-          headers: {
-            Authorization: `Bearer ${await getTokenSilently()}`
-          }
-        }
-      );
-
-      if (result.data) {
         setProblems(result.data);
+      } else {
+        if (!isAuthenticated) {
+          return;
+        }
+
+        const result = await axios.get(
+          `${process.env.REACT_APP_API_ENDPOINT}/problems/drafts`,
+          {
+            headers: {
+              Authorization: `Bearer ${await getTokenSilently()}`
+            }
+          }
+        );
+
+        if (result.data) {
+          setProblems(result.data);
+        }
       }
     })();
   }, [isAuthenticated]);
@@ -42,7 +50,9 @@ const ListProblems: React.FC = props => {
         {problems.map(problem => (
           <Table.Row key={problem.updated_at}>
             <Table.Cell>
-              <Link to={`/me/problems/${problem.id}`}>{problem.title}</Link>
+              <Link to={`${props.draft ? "/me" : ""}/problems/${problem.id}`}>
+                {problem.title}
+              </Link>
             </Table.Cell>
             <Table.Cell>
               {new Date(problem.updated_at * 1000).toLocaleString()}

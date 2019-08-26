@@ -36,9 +36,11 @@ const ProblemForm: React.FC<{
 
   return (
     <Form>
-      <Message>
-        <p>この問題は現在下書きの状態です。</p>
-      </Message>
+      {props.draft && (
+        <Message>
+          <p>この問題は現在下書きの状態です。</p>
+        </Message>
+      )}
 
       <Form.Input
         label="タイトル"

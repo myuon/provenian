@@ -29,9 +29,11 @@ const ShowProblem: React.FC<{
 
   return (
     <>
-      <Message>
-        <p>この問題は現在下書きの状態です。</p>
-      </Message>
+      {props.draft && (
+        <Message>
+          <p>この問題は現在下書きの状態です。</p>
+        </Message>
+      )}
 
       <Header as="h2">{problem.title}</Header>
       <p>{problem.content}</p>
