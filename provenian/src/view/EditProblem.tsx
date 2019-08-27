@@ -12,6 +12,7 @@ const EditProblem: React.FC<
     content: string;
     content_type: string;
     template: { [key: string]: string };
+    files: string[];
   });
   const { getTokenSilently } = useAuth0() as any;
 
@@ -60,7 +61,7 @@ const EditProblem: React.FC<
   };
 
   const publish = async () => {
-    const result = await axios.put(
+    await axios.put(
       `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/publish`,
       null,
       {
@@ -69,6 +70,7 @@ const EditProblem: React.FC<
         }
       }
     );
+    props.history.push(`/problems/${props.match.params.problemId}`);
   };
 
   return (

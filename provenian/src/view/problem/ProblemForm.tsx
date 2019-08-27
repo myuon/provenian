@@ -9,6 +9,7 @@ interface ProblemDetail {
   content: string;
   content_type: string;
   template: { [key: string]: string };
+  files: string[];
 }
 
 const ProblemForm: React.FC<{
@@ -23,6 +24,7 @@ const ProblemForm: React.FC<{
 }> = props => {
   const [content, setContent] = useState("");
   const [templateArray, setTemplateArray] = useState([]);
+  const [files, setFiles] = useState([]);
   const [title, setTitle] = useState("");
 
   useEffect(() => {
@@ -31,6 +33,9 @@ const ProblemForm: React.FC<{
 
     if (props.problem.template) {
       setTemplateArray(Object.entries(props.problem.template));
+    }
+    if (props.problem.files) {
+      setFiles(props.problem.files);
     }
   }, [props.problem]);
 
@@ -64,38 +69,20 @@ const ProblemForm: React.FC<{
         </Segment>
       </Form.Field>
       <Form.Field>
-        <label>テンプレート</label>
+        <label>添付ファイル</label>
         <Table>
           <Table.Header>
             <Table.Row>
               <Table.HeaderCell singleLine>言語</Table.HeaderCell>
-              <Table.HeaderCell>テンプレート</Table.HeaderCell>
+              <Table.HeaderCell>ファイル名</Table.HeaderCell>
+              <Table.HeaderCell>内容</Table.HeaderCell>
               <Table.HeaderCell />
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {templateArray.map(([language, text], index) => (
-              <Table.Row key={index}>
-                <Table.Cell collapsing>
-                  <Form.Input value={language} />
-                </Table.Cell>
-                <Table.Cell>
-                  <Form.Field>
-                    <TextareaAutosize value={text} />
-                  </Form.Field>
-                </Table.Cell>
-                <Table.Cell collapsing>
-                  <Button
-                    color={"red"}
-                    onClick={() =>
-                      setTemplateArray(
-                        templateArray.filter((_, i) => (i /= index))
-                      )
-                    }
-                  >
-                    削除
-                  </Button>
-                </Table.Cell>
+            {files.map((file, index) => (
+              <Table.Row>
+                <Table.Cell>{file}</Table.Cell>
               </Table.Row>
             ))}
             <Table.Row>
