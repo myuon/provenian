@@ -31,7 +31,7 @@ type ProblemRepo struct {
 }
 
 type LanguageFiles struct {
-	Isabelle []string `dynamo:"isabelle"`
+	Isabelle []string `json:"isabelle" dynamo:"isabelle"`
 }
 
 func (files LanguageFiles) ListLanguages() []string {
@@ -209,7 +209,7 @@ func (repo ProblemRepo) doCreate(userID string, input CreateProblemInput) error 
 	files := LanguageFiles{}
 	for _, attachment := range input.Attachments {
 		if attachment.Language == "isabelle" {
-			files.Isabelle = append(files.Isabelle, filepathAttachment(problemID, attachment.Language, attachment.Filename, true))
+			files.Isabelle = append(files.Isabelle, attachment.Filename)
 		} else {
 			return errors.New("Unsupported language: " + attachment.Language)
 		}
