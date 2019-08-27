@@ -8,34 +8,32 @@ interface ProblemDetail {
   title: string;
   content: string;
   content_type: string;
-  template: { [key: string]: string };
-  files: string[];
+  files: [string, string[]][];
 }
 
 const ProblemForm: React.FC<{
   problem: ProblemDetail;
   draft: boolean;
-  onSubmit: (arg: {
-    title: string;
-    content: string;
-    template: { [key: string]: string };
-  }) => void;
+  onSubmit: (arg: { title: string; content: string; files: string[] }) => void;
   onPublish?: () => void;
 }> = props => {
   const [content, setContent] = useState("");
-  const [templateArray, setTemplateArray] = useState([]);
   const [files, setFiles] = useState([]);
   const [title, setTitle] = useState("");
+  console.log(files);
 
   useEffect(() => {
     setContent(props.problem.content);
     setTitle(props.problem.title);
 
-    if (props.problem.template) {
-      setTemplateArray(Object.entries(props.problem.template));
-    }
     if (props.problem.files) {
-      setFiles(props.problem.files);
+      setFiles(
+        Object.entries(props.problem.files)
+          .map(([language, filenames]) =>
+            filenames.map(filename => [language, filename])
+          )
+          .flat()
+      );
     }
   }, [props.problem]);
 
@@ -80,9 +78,10 @@ const ProblemForm: React.FC<{
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {files.map((file, index) => (
+            {files.map(([language, filename], index) => (
               <Table.Row>
-                <Table.Cell>{file}</Table.Cell>
+                <Table.Cell>{language}</Table.Cell>
+                <Table.Cell>{filename}</Table.Cell>
               </Table.Row>
             ))}
             <Table.Row>
@@ -90,15 +89,7 @@ const ProblemForm: React.FC<{
               <Table.Cell />
               <Table.Cell>
                 <Form.Field>
-                  <Button
-                    onClick={() =>
-                      setTemplateArray(
-                        templateArray.concat([["Language", "Template"]])
-                      )
-                    }
-                  >
-                    追加
-                  </Button>
+                  <Button>追加</Button>
                 </Form.Field>
               </Table.Cell>
             </Table.Row>
@@ -116,7 +107,7 @@ const ProblemForm: React.FC<{
           props.onSubmit({
             title,
             content,
-            template: Object.fromEntries(templateArray)
+            files
           })
         }
       >

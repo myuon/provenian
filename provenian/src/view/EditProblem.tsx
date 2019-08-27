@@ -11,13 +11,11 @@ const EditProblem: React.FC<
     title: string;
     content: string;
     content_type: string;
-    template: { [key: string]: string };
-    files: string[];
+    files: [string, string[]][];
   });
   const { getTokenSilently } = useAuth0() as any;
 
   const [content, setContent] = useState("");
-  const [templateArray, setTemplateArray] = useState([]);
   const [title, setTitle] = useState("");
 
   useEffect(() => {
@@ -36,9 +34,6 @@ const EditProblem: React.FC<
 
       setTitle(result.title);
       setContent(result.content);
-      if (result.template) {
-        setTemplateArray(Object.entries(result.template));
-      }
     })();
   }, [props.match.params.problemId]);
 
@@ -48,8 +43,7 @@ const EditProblem: React.FC<
       {
         title,
         content,
-        content_type: "text/markdown",
-        template: Object.fromEntries(templateArray)
+        content_type: "text/markdown"
       },
       {
         headers: {
