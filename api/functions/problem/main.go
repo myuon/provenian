@@ -30,16 +30,36 @@ type ProblemRepo struct {
 	draftTable   dynamo.Table
 }
 
+type LanguageFiles struct {
+	Isabelle []string `dynamo:"isabelle"`
+}
+
 type Problem struct {
-	ID          string            `json:"id" dynamo:"id"`
-	Version     string            `json:"version" dynamo:"version"`
-	Title       string            `json:"title" dynamo:"title"`
-	ContentType string            `json:"content_type" dynamo:"-"`
-	Content     string            `json:"content" dynamo:"-"`
-	Template    map[string]string `json:"template" dynamo:"-"`
-	UpdatedAt   int64             `json:"updated_at" dynamo:"updated_at"`
-	Writer      string            `json:"writer" dynamo:"writer"`
-	Files       []string          `json:"files" dynamo:"files"`
+	ID          string        `json:"id" dynamo:"id"`
+	Version     string        `json:"version" dynamo:"version"`
+	Title       string        `json:"title" dynamo:"title"`
+	ContentType string        `json:"content_type" dynamo:"-"`
+	Content     string        `json:"content" dynamo:"-"`
+	CreatedAt   int64         `json:"created_at" dynamo:"created_at"`
+	UpdatedAt   int64         `json:"updated_at" dynamo:"updated_at"`
+	Writer      string        `json:"writer" dynamo:"writer"`
+	Files       LanguageFiles `json:"files" dynamo:"files"`
+}
+
+func NewProblem(title string, contentType string, content string, userID string, files LanguageFiles) Problem {
+	id := uuid.NewV4().String()
+
+	return Problem{
+		ID:          id,
+		Version:     "1.0",
+		Title:       title,
+		ContentType: contentType,
+		Content:     content,
+		UpdatedAt:   time.Now().Unix(),
+		CreatedAt:   time.Now().Unix(),
+		Writer:      userID,
+		Files:       files,
+	}
 }
 
 func filepath(problemID string, draft bool) string {
@@ -117,6 +137,26 @@ func (repo ProblemRepo) saveAttachment(problemID string, language string, filena
 	return nil
 }
 
+// read draft attachment file and copy to public attachment
+func (repo ProblemRepo) publishAttachment(problemID string, language string, filename string) error {
+	out, err := repo.s3c.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(storageBucketName),
+		Key:    aws.String(filepathAttachment(problemID, language, filename, true)),
+	})
+	if err != nil {
+		return err
+	}
+
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(out.Body)
+
+	if err := repo.saveAttachment(problemID, language, filename, buf.String(), false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (repo ProblemRepo) publishIndex() error {
 	var problems []Problem
 	if err := repo.problemTable.Scan().All(&problems); err != nil {
@@ -146,36 +186,34 @@ type Attachment struct {
 }
 
 type CreateProblemInput struct {
-	Title       string            `json:"title"`
-	ContentType string            `json:"content_type"`
-	Content     string            `json:"content"`
-	Template    map[string]string `json:"template"`
-	Attachments []Attachment      `json:"attachments"`
+	Title       string       `json:"title"`
+	ContentType string       `json:"content_type"`
+	Content     string       `json:"content"`
+	Attachments []Attachment `json:"attachments"`
 }
 
+// This is always "draft" mode
 func (repo ProblemRepo) doCreate(userID string, input CreateProblemInput) error {
 	problemID := uuid.NewV4().String()
 
-	files := []string{}
+	files := LanguageFiles{}
+	for _, attachment := range input.Attachments {
+		if attachment.Language == "isabelle" {
+			files.Isabelle = append(files.Isabelle, filepathAttachment(problemID, attachment.Language, attachment.Filename, true))
+		} else {
+			return errors.New("Unsupported language: " + attachment.Language)
+		}
+	}
+
+	// In case LanguageFiles contains unsupported language file,
+	// separate the for-loop so that we don't mind to undo the putObject actions
 	for _, attachment := range input.Attachments {
 		if err := repo.saveAttachment(problemID, attachment.Language, attachment.Filename, attachment.Code, true); err != nil {
 			return err
 		}
-
-		files = append(files, attachment.Language+attachment.Filename)
 	}
 
-	problem := Problem{
-		ID:          problemID,
-		Version:     "1.0",
-		Title:       input.Title,
-		ContentType: input.ContentType,
-		Content:     input.Content,
-		Template:    input.Template,
-		UpdatedAt:   time.Now().Unix(),
-		Writer:      userID,
-		Files:       files,
-	}
+	problem := NewProblem(input.Title, input.ContentType, input.Content, userID, files)
 
 	if err := repo.doPut(problemID, problem, true); err != nil {
 		return err
@@ -185,10 +223,9 @@ func (repo ProblemRepo) doCreate(userID string, input CreateProblemInput) error 
 }
 
 type UpdateProblemInput struct {
-	Title       string            `json:"title"`
-	ContentType string            `json:"content_type"`
-	Content     string            `json:"content"`
-	Template    map[string]string `json:"template"`
+	Title       string `json:"title"`
+	ContentType string `json:"content_type"`
+	Content     string `json:"content"`
 }
 
 func (repo ProblemRepo) doUpdate(problemID string, userID string, input UpdateProblemInput) error {
@@ -201,19 +238,11 @@ func (repo ProblemRepo) doUpdate(problemID string, userID string, input UpdatePr
 		return errors.New("unauthorized")
 	}
 
-	problem := Problem{
-		ID:          problemID,
-		Version:     "1.0",
-		Title:       input.Title,
-		ContentType: input.ContentType,
-		Content:     input.Content,
-		Template:    input.Template,
-		UpdatedAt:   time.Now().Unix(),
-		Writer:      prev.Writer,
-		Files:       prev.Files,
-	}
+	prev.Title = input.Title
+	prev.Content = input.Content
+	prev.UpdatedAt = time.Now().Unix()
 
-	return repo.doPut(problemID, problem, true)
+	return repo.doPut(problemID, prev, true)
 }
 
 func (repo ProblemRepo) doListWriterProblems(userID string, draft bool) ([]Problem, error) {
@@ -233,6 +262,11 @@ func (repo ProblemRepo) doPublish(problemID string, userID string) error {
 
 	if err := repo.doPut(problemID, problem, false); err != nil {
 		return errors.Wrap(err, "failed to put")
+	}
+
+	files := problem.Files
+	for _, filename := range files.Isabelle {
+		repo.publishAttachment(problemID, "isabelle", filename)
 	}
 
 	return repo.publishIndex()
