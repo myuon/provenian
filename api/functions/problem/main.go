@@ -34,6 +34,16 @@ type LanguageFiles struct {
 	Isabelle []string `dynamo:"isabelle"`
 }
 
+func (files LanguageFiles) ListLanguages() []string {
+	var langs []string
+
+	if len(files.Isabelle) > 0 {
+		langs = append(langs, "isabelle")
+	}
+
+	return langs
+}
+
 type Problem struct {
 	ID          string        `json:"id" dynamo:"id"`
 	Version     string        `json:"version" dynamo:"version"`
@@ -44,6 +54,7 @@ type Problem struct {
 	UpdatedAt   int64         `json:"updated_at" dynamo:"updated_at"`
 	Writer      string        `json:"writer" dynamo:"writer"`
 	Files       LanguageFiles `json:"files" dynamo:"files"`
+	Languages   []string      `json:"languages" dynamo:"-"`
 }
 
 func NewProblem(id string, title string, contentType string, content string, userID string, files LanguageFiles) Problem {
@@ -57,6 +68,7 @@ func NewProblem(id string, title string, contentType string, content string, use
 		CreatedAt:   time.Now().Unix(),
 		Writer:      userID,
 		Files:       files,
+		Languages:   files.ListLanguages(),
 	}
 }
 
