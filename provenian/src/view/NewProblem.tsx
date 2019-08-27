@@ -8,7 +8,7 @@ import remark from "remark";
 import reactRenderer from "remark-react";
 import update from "immutability-helper";
 
-const NewProblem: React.FC = props => {
+const NewProblem: React.FC<RouteComponentProps> = props => {
   const { getTokenSilently } = useAuth0() as any;
 
   const [title, setTitle] = useState("");
@@ -55,20 +55,32 @@ const NewProblem: React.FC = props => {
     },
     [
       {
-        language: "isabelle2019",
+        language: "isabelle",
         filename: "Goal.thy",
         code: `theory Goal
-imports Main
+imports Submitted
 begin
+
+thorem "_"
+by (rule goal)
 
 end`,
         timestamp: new Date().getTime()
+      },
+      {
+        language: "isabelle",
+        filename: "ROOT",
+        code: `session "all" = HOL +
+theories [document = false]
+  Submitted
+  Goal`,
+        timestamp: new Date().getTime() + 1
       }
     ]
   );
 
   const submit = async () => {
-    const result = await axios.post(
+    await axios.post(
       `${process.env.REACT_APP_API_ENDPOINT}/problems`,
       {
         title,
@@ -82,6 +94,8 @@ end`,
         }
       }
     );
+
+    props.history.push("/me/problems");
   };
 
   return (
@@ -203,7 +217,7 @@ end`,
         </Table>
       </Form.Field>
       <Form.Button primary onClick={submit}>
-        Submit
+        送信
       </Form.Button>
     </Form>
   );
