@@ -13,42 +13,6 @@ const NewProblem: React.FC = props => {
 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [templates, dispatchTemplate] = useReducer(
-    (
-      state: Array<{ language: string; template: string; timestamp: number }>,
-      action: {
-        type: "append" | "delete" | "update";
-        index?: number;
-        value?: any;
-      }
-    ) => {
-      switch (action.type) {
-        case "append":
-          return update(state, {
-            $push: [
-              {
-                language: "language",
-                template: "template",
-                timestamp: new Date().getTime()
-              }
-            ]
-          });
-        case "delete":
-          return state.filter((_, index) => action.index != index);
-        case "update":
-          return update(state, {
-            [action.index]: {
-              [action.value.type]: {
-                $set: action.value.value
-              }
-            }
-          });
-        default:
-          throw new Error("unreachable");
-      }
-    },
-    []
-  );
   const [attachments, dispatchAttachments] = useReducer(
     (
       state: Array<{
@@ -110,9 +74,6 @@ end`,
         title,
         content,
         content_type: "text/markdown",
-        templates: Object.fromEntries(
-          templates.map(value => [value.language, value.template])
-        ),
         attachments: attachments
       },
       {
