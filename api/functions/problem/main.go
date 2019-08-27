@@ -46,9 +46,7 @@ type Problem struct {
 	Files       LanguageFiles `json:"files" dynamo:"files"`
 }
 
-func NewProblem(title string, contentType string, content string, userID string, files LanguageFiles) Problem {
-	id := uuid.NewV4().String()
-
+func NewProblem(id string, title string, contentType string, content string, userID string, files LanguageFiles) Problem {
 	return Problem{
 		ID:          id,
 		Version:     "1.0",
@@ -213,7 +211,7 @@ func (repo ProblemRepo) doCreate(userID string, input CreateProblemInput) error 
 		}
 	}
 
-	problem := NewProblem(input.Title, input.ContentType, input.Content, userID, files)
+	problem := NewProblem(problemID, input.Title, input.ContentType, input.Content, userID, files)
 
 	if err := repo.doPut(problemID, problem, true); err != nil {
 		return err
