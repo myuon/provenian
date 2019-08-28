@@ -1,19 +1,20 @@
 import React, { useState } from "react";
 import {
   Header,
-  Segment,
-  Accordion,
   Label,
-  Icon,
   Button,
   Form,
   Select,
-  Message
+  Message,
+  Tab
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
+import { ProblemDetail } from "../../types";
 
 const ShowProblem: React.FC<{
-  problem: any;
+  problem: Omit<ProblemDetail, "files"> & {
+    files: { filename: string; content: string }[];
+  };
   languages: { value: string; label: string; color: string }[];
   isAuthenticated?: boolean;
   onLogin: () => void;
@@ -23,9 +24,12 @@ const ShowProblem: React.FC<{
   const problem = props.problem;
   const isAuthenticated = props.isAuthenticated || false;
 
-  const [accordion, setAccordion] = useState("");
   const [language, setLanguage] = useState("");
   const [sourceCode, setSourceCode] = useState("");
+
+  if (!problem) {
+    return <>loading...</>;
+  }
 
   return (
     <>
@@ -49,30 +53,22 @@ const ShowProblem: React.FC<{
 
       <p>検証時間制限: 10sec / メモリ上限: 1500MB</p>
 
-      <Header as="h4">言語テンプレート</Header>
-      <p>ソースコードは次のテンプレートに従って提出せよ。</p>
+      <Header as="h4">言語ファイル</Header>
+      <p>問題には次のファイルが用意されている。</p>
 
-      <Segment>
-        <Accordion>
-          {props.languages.map(lang => (
-            <div key={lang.value}>
-              <Accordion.Title
-                active={accordion === lang.value}
-                index={lang.value}
-                onClick={() =>
-                  setAccordion(accordion === lang.value ? "" : lang.value)
-                }
-              >
-                <Icon name="dropdown" />
-                {lang.label}
-              </Accordion.Title>
-              <Accordion.Content active={accordion === lang.value}>
-                <pre>{problem.template[lang.value]}</pre>
-              </Accordion.Content>
-            </div>
-          ))}
-        </Accordion>
-      </Segment>
+      <Tab
+        panes={props.problem.files.map(file => ({
+          menuItem: file.filename,
+          render: () => (
+            <Tab.Pane>
+              <pre>
+                <code>{file.content}</code>
+              </pre>
+            </Tab.Pane>
+          )
+        }))}
+        style={{ marginBottom: "1rem" }}
+      />
 
       {!isAuthenticated ? (
         <Button primary onClick={props.onLogin}>
@@ -80,6 +76,8 @@ const ShowProblem: React.FC<{
         </Button>
       ) : (
         <Form>
+          <Header as="h4">提出</Header>
+
           <Form.Field>
             <label>Language</label>
             <Select

@@ -78,13 +78,15 @@ const ProblemForm: React.FC<{
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {files.map(([language, filename], index) => (
+            {files.map(([language, filename]) => (
               <Table.Row>
                 <Table.Cell>{language}</Table.Cell>
                 <Table.Cell>{filename}</Table.Cell>
+                <Table.Cell></Table.Cell>
               </Table.Row>
             ))}
             <Table.Row>
+              <Table.Cell />
               <Table.Cell />
               <Table.Cell />
               <Table.Cell>

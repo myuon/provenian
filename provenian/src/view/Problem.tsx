@@ -7,6 +7,7 @@ import BuildBadge from "./BuildBadge";
 import { useAuth0 } from "../components/Auth0Provider";
 import EditProblem from "./EditProblem";
 import ShowProblem from "./problem/ShowProblem";
+import { ProblemDetail } from "../types";
 
 export const languages: { [key: string]: { text: string; color: string } } = {
   coq: {
@@ -24,35 +25,46 @@ const Content: React.FC<
 > = props => {
   const [sourceCode, setSourceCode] = useState("");
   const [language, setLanguage] = useState("");
-  const [problem, setProblem] = useState({} as {
-    title: string;
-    content: string;
-    content_type: string;
-    template: { [key: string]: string };
-  });
+  const [problem, setProblem] = useState<ProblemDetail>();
   const [supportedLangs, setSupportedLangs] = useState([] as string[]);
   const {
     isAuthenticated,
     loginWithRedirect,
     getTokenSilently
   } = useAuth0() as any;
+  const [fileContents, setFileContents] = useState<
+    { filename: string; content: string }[]
+  >();
 
   useEffect(() => {
     (async () => {
-      const { version, ...result } = (await axios.get(
+      const result: ProblemDetail = (await axios.get(
         `${process.env.REACT_APP_FILE_STORAGE}/${props.match.params.problemId}${
           props.draft ? ".draft" : ""
         }.json`
       )).data;
 
-      if (version !== "1.0") {
+      if (result.version !== "1.0") {
         return;
       }
 
       setProblem(result);
-      if (result.template) {
-        setSupportedLangs(Object.keys(result.template));
-      }
+
+      const files = (await Promise.all(
+        Object.entries(result.files).map(([language, files]) =>
+          Promise.all(
+            files.map(async file => ({
+              filename: `${language}/${file}`,
+              content: (await axios.get(
+                `${process.env.REACT_APP_FILE_STORAGE}${
+                  props.draft ? "/draft" : ""
+                }/${props.match.params.problemId}/${language}/${file}`
+              )).data
+            }))
+          )
+        )
+      )).flat();
+      setFileContents(files);
     })();
   }, [props.match.params.problemId]);
 
@@ -72,9 +84,13 @@ const Content: React.FC<
     props.history.push(`/submissions/${result.data.id}`);
   };
 
+  if (!problem || !fileContents) {
+    return <>loading...</>;
+  }
+
   return (
     <ShowProblem
-      problem={problem}
+      problem={Object.assign(problem, { files: fileContents })}
       languages={[]}
       isAuthenticated={isAuthenticated}
       onLogin={loginWithRedirect}
