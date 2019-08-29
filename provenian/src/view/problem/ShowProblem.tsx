@@ -1,15 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Header,
   Label,
   Button,
   Form,
-  Select,
   Message,
-  Tab
+  Tab,
+  Dropdown
 } from "semantic-ui-react";
 import TextareaAutosize from "react-textarea-autosize";
 import { ProblemDetail } from "../../types";
+
+const getLanguageName = (language: string) => {
+  if (language === "isabelle") {
+    return "Isabelle (2019)";
+  }
+
+  throw new Error("unreachable");
+};
 
 const ShowProblem: React.FC<{
   problem: Omit<ProblemDetail, "files"> & {
@@ -26,6 +34,19 @@ const ShowProblem: React.FC<{
 
   const [language, setLanguage] = useState("");
   const [sourceCode, setSourceCode] = useState("");
+  const [languageOptions, setLanguageOptions] = useState<
+    { key: string; value: string; text: string }[]
+  >([]);
+
+  useEffect(() => {
+    setLanguageOptions(
+      problem.languages.map(language => ({
+        key: language,
+        value: language,
+        text: getLanguageName(language)
+      }))
+    );
+  }, [problem.languages]);
 
   if (!problem) {
     return <>loading...</>;
@@ -79,21 +100,20 @@ const ShowProblem: React.FC<{
           <Header as="h4">提出</Header>
 
           <Form.Field>
-            <label>Language</label>
-            <Select
-              placeholder="Select language"
-              options={props.languages.map(language => ({
-                key: language.value,
-                value: language.value,
-                text: language.label
-              }))}
-              defaultValue={language}
-              onChange={(event: any) => setLanguage(event.target.value)}
+            <label>言語</label>
+
+            <Dropdown
+              selection
+              placeholder="言語"
+              options={languageOptions}
+              onChange={(_, { value }) => {
+                setLanguage(value as string);
+              }}
             />
           </Form.Field>
           <Form.Field
             control={TextareaAutosize}
-            label="Source Code"
+            label="ソースコード"
             placeholder="code here..."
             value={sourceCode}
             onChange={(event: any) => setSourceCode(event.target.value)}
