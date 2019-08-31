@@ -11,6 +11,8 @@
     "axios": "^0.19.0"
   },
   "scripts": {
-    "docker:push": "sudo docker build . -t myuon/isabelle-judge:latest && sudo docker push myuon/isabelle-judge:latest"
+    "docker:build": "sudo docker build . -t myuon/isabelle-judge:latest",
+    "docker:push": "yarn docker:build && sudo docker push myuon/isabelle-judge:latest",
+    "docker:run": "sudo docker run -it --rm --env-file=./.env myuon/isabelle-judge:latest"
   }
 }
