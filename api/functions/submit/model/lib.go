@@ -15,6 +15,22 @@ func WJ() Result {
 	}
 }
 
+func CE(message string) Result {
+	return Result{
+		Code:       "CE",
+		Text:       message,
+		IsFinished: true,
+	}
+}
+
+func V(message string) Result {
+	return Result{
+		Code:       "V",
+		Text:       message,
+		IsFinished: true,
+	}
+}
+
 type Submission struct {
 	ID        string `dynamo:"id" json:"id"`
 	CreatedAt int64  `dynamo:"created_at" json:"created_at"`
