@@ -19,6 +19,14 @@ const getLanguageName = (language: string) => {
   throw new Error("unreachable");
 };
 
+const getLanguageColor = (language: string) => {
+  if (language === "isabelle") {
+    return "yellow";
+  }
+
+  throw new Error("unreachable");
+};
+
 const ShowProblem: React.FC<{
   problem: Omit<ProblemDetail, "files"> & {
     files: { filename: string; content: string }[];
@@ -65,14 +73,12 @@ const ShowProblem: React.FC<{
 
       <div>
         <span>対応言語:</span>
-        {props.languages.map(lang => (
-          <Label key={lang.value} color={lang.color as any}>
+        {props.problem.languages.map(lang => (
+          <Label key={lang} color={getLanguageColor(lang) as any}>
             {lang}
           </Label>
         ))}
       </div>
-
-      <p>検証時間制限: 10sec / メモリ上限: 1500MB</p>
 
       <Header as="h4">言語ファイル</Header>
       <p>問題には次のファイルが用意されている。</p>
