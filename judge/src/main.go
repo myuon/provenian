@@ -46,7 +46,7 @@ func NewSQSClient(queueName string, instance *sqs.SQS) (SQSClient, error) {
 	}, nil
 }
 
-func (sqsc SQSClient) Receive() ([]string, error) {
+func (sqsc SQSClient) Receive() ([]sqs.Message, error) {
 	res, err := sqsc.ReceiveMessage(&sqs.ReceiveMessageInput{
 		QueueUrl: aws.String(sqsc.queueUrl),
 	})
@@ -54,9 +54,9 @@ func (sqsc SQSClient) Receive() ([]string, error) {
 		return nil, err
 	}
 
-	var messages []string
+	var messages []sqs.Message
 	for _, m := range res.Messages {
-		messages = append(messages, *m.Body)
+		messages = append(messages, *m)
 	}
 
 	return messages, nil
@@ -151,8 +151,14 @@ func start(sqsc SQSClient, s3c S3Client, submissionTable dynamo.Table) {
 			panic(err)
 		}
 
-		for _, submissionID := range ids {
+		for _, message := range ids {
+			submissionID := *message.Body
+
 			if err := execRunner(submissionTable, s3c, submissionID); err != nil {
+				panic(err)
+			}
+
+			if err := sqsc.Delete(*message.ReceiptHandle); err != nil {
 				panic(err)
 			}
 		}
