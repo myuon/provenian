@@ -3,20 +3,21 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"github.com/aws/aws-sdk-go/aws"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/sqs"
+	"github.com/guregu/dynamo"
 	"github.com/satori/go.uuid"
 
-	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-lambda-go/lambda"
-	"github.com/guregu/dynamo"
+	"github.com/myuon/provenian/api/functions/submit/model"
 )
 
 var submitTableName = os.Getenv("submitTableName")
@@ -28,32 +29,7 @@ type SubmitRepo struct {
 	s3service s3.S3
 }
 
-type Result struct {
-	Code       string `dynamo:"status_code" json:"status_code"`
-	Text       string `dynamo:"status_text" json:"status_text"`
-	Message    string `dynamo:"message" json:"message"`
-	IsFinished bool   `dynamo:"-" json:"is_finished"`
-}
-
-func wjResult() Result {
-	return Result{
-		Code:       "WJ",
-		Text:       "Wait for Judge...",
-		IsFinished: false,
-	}
-}
-
-type Submission struct {
-	ID        string `dynamo:"id" json:"id"`
-	CreatedAt int64  `dynamo:"created_at" json:"created_at"`
-	ProblemID string `dynamo:"problem_id" json:"problem_id"`
-	Code      string `dynamo:"code" json:"code"`
-	Language  string `dynamo:"language" json:"language"`
-	UserID    string `dynamo:"user_id" json:"user_id"`
-	Result    Result `dynamo:"result" json:"result"`
-}
-
-func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
+func (repo SubmitRepo) Create(submission model.Submission) (model.Submission, error) {
 	submission.ID = uuid.NewV4().String()
 	submission.CreatedAt = time.Now().Unix()
 
@@ -63,13 +39,13 @@ func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
 		Key:    aws.String(codeFilePath),
 		Body:   aws.ReadSeekCloser(strings.NewReader(submission.Code)),
 	}); err != nil {
-		return Submission{}, err
+		return model.Submission{}, err
 	}
 
 	submission.Code = codeFilePath
 
 	if err := repo.table.Put(submission).Run(); err != nil {
-		return Submission{}, err
+		return model.Submission{}, err
 	}
 
 	return submission, nil
@@ -77,14 +53,14 @@ func (repo SubmitRepo) Create(submission Submission) (Submission, error) {
 
 // Get method returns submission by ID
 // Result will be wj if the status is "Wait for Judge"
-func (repo SubmitRepo) Get(ID string) (Submission, error) {
-	var submission Submission
+func (repo SubmitRepo) Get(ID string) (model.Submission, error) {
+	var submission model.Submission
 	if err := repo.table.Get("id", ID).One(&submission); err != nil {
-		return Submission{}, err
+		return model.Submission{}, err
 	}
 
-	if submission.Result == (Result{}) {
-		submission.Result = wjResult()
+	if submission.Result == (model.Result{}) {
+		submission.Result = model.WJ()
 	} else {
 		submission.Result.IsFinished = true
 	}
@@ -94,15 +70,15 @@ func (repo SubmitRepo) Get(ID string) (Submission, error) {
 	return submission, nil
 }
 
-func (repo SubmitRepo) ListByProblemID(ID string) ([]Submission, error) {
-	var submissions []Submission
+func (repo SubmitRepo) ListByProblemID(ID string) ([]model.Submission, error) {
+	var submissions []model.Submission
 	if err := repo.table.Get("problem_id", ID).Index("problems").All(&submissions); err != nil {
 		return nil, err
 	}
 
 	for index, submission := range submissions {
-		if submission.Result == (Result{}) {
-			submissions[index].Result = wjResult()
+		if submission.Result == (model.Result{}) {
+			submissions[index].Result = model.WJ()
 		} else {
 			submissions[index].Result.IsFinished = true
 		}
@@ -136,7 +112,7 @@ func (queue JobQueue) Push(message string) error {
 
 // ---
 
-func doPost(submitRepo SubmitRepo, queue JobQueue, submissionInput Submission) (events.APIGatewayProxyResponse, error) {
+func doPost(submitRepo SubmitRepo, queue JobQueue, submissionInput model.Submission) (events.APIGatewayProxyResponse, error) {
 	submission, err := submitRepo.Create(submissionInput)
 	if err != nil {
 		panic(err)
@@ -223,7 +199,7 @@ func handler(ctx context.Context, event events.APIGatewayProxyRequest) (events.A
 			panic(err)
 		}
 
-		submission := Submission{
+		submission := model.Submission{
 			ProblemID: event.PathParameters["problemId"],
 			Code:      input.Code,
 			UserID:    event.RequestContext.Authorizer["sub"].(string),

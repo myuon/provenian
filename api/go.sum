@@ -18,6 +18,7 @@ github.com/guregu/dynamo v1.3.1/go.mod h1:ZS3tuE64ykQlCnuGfOnAi+ztGZlq0Wo/z5EVQA
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af/go.mod h1:Nht3zPeWKUH0NzdCt2Blrr5ys8VGpn0CEB0cQHVjt7k=
 github.com/myuon/provenian v0.0.0-20190823141851-54636ec1d48d h1:tOYKmiQnjNDpEHah5t3pQOkF+mzsWo2lwNMmP4zBnUQ=
+github.com/myuon/provenian v0.0.0-20190831051405-c8f6a7045f71 h1:Vr/4N5DLsMgFJldNt3YVfNEeH8d2mcK9BcJyphBwCgo=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
