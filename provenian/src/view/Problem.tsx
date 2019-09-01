@@ -23,10 +23,7 @@ export const languages: { [key: string]: { text: string; color: string } } = {
 const Content: React.FC<
   RouteComponentProps<{ problemId: string }> & { draft: boolean }
 > = props => {
-  const [sourceCode, setSourceCode] = useState("");
-  const [language, setLanguage] = useState("");
   const [problem, setProblem] = useState<ProblemDetail>();
-  const [supportedLangs, setSupportedLangs] = useState([] as string[]);
   const {
     isAuthenticated,
     loginWithRedirect,
@@ -68,7 +65,7 @@ const Content: React.FC<
     })();
   }, [props.match.params.problemId]);
 
-  const submit = async () => {
+  const submit = async ({ language, sourceCode }) => {
     const result = await axios.post(
       `${process.env.REACT_APP_API_ENDPOINT}/problems/${props.match.params.problemId}/submit`,
       {
