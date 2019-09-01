@@ -18,7 +18,8 @@ func WJ() Result {
 func CE(message string) Result {
 	return Result{
 		Code:       "CE",
-		Text:       message,
+		Text:       "Compilation Error",
+		Message:    message,
 		IsFinished: true,
 	}
 }
@@ -26,7 +27,8 @@ func CE(message string) Result {
 func V(message string) Result {
 	return Result{
 		Code:       "V",
-		Text:       message,
+		Text:       "Verified",
+		Message:    message,
 		IsFinished: true,
 	}
 }
