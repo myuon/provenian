@@ -48,8 +48,7 @@ func NewSQSClient(queueName string, instance *sqs.SQS) (SQSClient, error) {
 
 func (sqsc SQSClient) Receive() ([]string, error) {
 	res, err := sqsc.ReceiveMessage(&sqs.ReceiveMessageInput{
-		QueueUrl:        aws.String(sqsc.queueUrl),
-		WaitTimeSeconds: aws.Int64(10),
+		QueueUrl: aws.String(sqsc.queueUrl),
 	})
 	if err != nil {
 		return nil, err
@@ -179,7 +178,7 @@ func execRunner(submissionTable dynamo.Table, s3c S3Client, submissionID string)
 	}
 
 	// Save submission file
-	if err := s3c.DownloadObject(submission.ProblemID+"/submissions/"+submission.ID, submissionFilePath); err != nil {
+	if err := s3c.DownloadObject(submission.Code, submissionFilePath); err != nil {
 		return err
 	}
 
@@ -224,7 +223,6 @@ func execIsabelle() (model.Result, error) {
 	}
 
 	writer := bufio.NewWriter(logfile)
-	defer writer.Flush()
 
 	if cmd.Start(); err != nil {
 		return model.Result{}, err
@@ -233,6 +231,7 @@ func execIsabelle() (model.Result, error) {
 	go io.Copy(writer, stdoutPipe)
 	go io.Copy(writer, stderrPipe)
 	cmd.Wait()
+	writer.Flush()
 
 	bytes, err := ioutil.ReadFile(logfilePath)
 	if err != nil {
