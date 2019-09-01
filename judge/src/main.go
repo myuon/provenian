@@ -151,9 +151,6 @@ func start(sqsc SQSClient, s3c S3Client, submissionTable dynamo.Table) {
 		if err != nil {
 			panic(err)
 		}
-		if len(ids) == 0 {
-			return
-		}
 
 		for _, submissionID := range ids {
 			if err := execRunner(submissionTable, s3c, submissionID); err != nil {

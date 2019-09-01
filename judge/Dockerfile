@@ -7,6 +7,7 @@ FROM makarius/isabelle:Isabelle2019
 
 USER root
 
+RUN mkdir -p /src/isabelle
 COPY --from=build-env /src/main ./main
 ENV ISABELLE_PATH=/home/isabelle/Isabelle/bin/isabelle
 ENV SUBMISSION_FILE_PATH=/src/isabelle/Submitted.thy
