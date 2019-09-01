@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createRef, useReducer } from "react";
+import React, { useState, useReducer, useCallback } from "react";
 import { RouteComponentProps } from "react-router";
 import { useAuth0 } from "../components/Auth0Provider";
 import axios from "axios";
@@ -40,7 +40,7 @@ const NewProblem: React.FC<RouteComponentProps> = props => {
             ]
           });
         case "delete":
-          return state.filter((_, index) => index != action.index);
+          return state.filter((_, index) => index !== action.index);
         case "update":
           return update(state, {
             [action.index]: {
@@ -79,7 +79,7 @@ theories [document = false]
     ]
   );
 
-  const submit = async () => {
+  const submit = useCallback(async () => {
     await axios.post(
       `${process.env.REACT_APP_API_ENDPOINT}/problems`,
       {
@@ -96,7 +96,7 @@ theories [document = false]
     );
 
     props.history.push("/me/problems");
-  };
+  }, [title, content, attachments]);
 
   return (
     <Form>

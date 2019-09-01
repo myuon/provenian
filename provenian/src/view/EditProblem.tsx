@@ -35,7 +35,7 @@ const EditProblem: React.FC<
       setTitle(result.title);
       setContent(result.content);
     })();
-  }, [props.match.params.problemId]);
+  }, [props.match.params.problemId, props.draft]);
 
   const submit = async () => {
     const result = await axios.put(

@@ -35,7 +35,7 @@ const ListProblems: React.FC<{ draft: boolean }> = props => {
         }
       }
     })();
-  }, [isAuthenticated]);
+  }, [isAuthenticated, props.draft]);
 
   return (
     <Table celled compact>
