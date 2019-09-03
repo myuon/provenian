@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  pulumi: pulumi/pulumi@1.0.0
+  pulumi: pulumi/pulumi@1.0.1
 
 jobs:
   api-deploy:
@@ -40,4 +40,4 @@ workflows:
             tags:
               only: /^release-.*/
             branches:
-              only: /.*/
+              ignore: /.*/
