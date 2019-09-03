@@ -1,0 +1,43 @@
+version: 2.1
+
+orbs:
+  pulumi: pulumi/pulumi@1.0.0
+
+jobs:
+  api-deploy:
+    parameters:
+      env:
+        type: enum
+        enum: ["dev", "prod"]
+    docker:
+      - image: myuon/node-on-golang:latest
+    steps:
+      - checkout
+      - pulumi/login
+      - run:
+          command: npm ci
+          working_directory: api
+      - pulumi/update:
+          stack: myuon/provenian-api/<< parameters.env >>
+          working_directory: api
+
+workflows:
+  version: 2
+  api-dev:
+    jobs:
+      - api-deploy:
+          context: aws
+          env: dev
+          filters:
+            branches:
+              only: master
+  api-prod:
+    jobs:
+      - api-deploy:
+          context: aws
+          env: prod
+          filters:
+            tags:
+              only: /^release-.*/
+            branches:
+              only: /.*/
