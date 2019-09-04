@@ -207,7 +207,7 @@ echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
       vpcZoneIdentifiers: [parameters.subnetId],
       minSize: 0,
       maxSize: 10,
-      desiredCapacity: 1,
+      desiredCapacity: config.stage === "prod" ? 1 : 0,
       mixedInstancesPolicy: {
         instancesDistribution: {
           onDemandAllocationStrategy: "prioritized",
@@ -240,7 +240,7 @@ echo ECS_CLUSTER=${name} >> /etc/ecs/ecs.config`).toString("base64")
     cluster: cluster.name,
     taskDefinition: judgeTask.arn,
     launchType: "EC2",
-    desiredCount: 0
+    desiredCount: config.stage === "prod" ? 1 : 0
   });
 };
 
