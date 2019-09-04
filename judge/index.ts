@@ -17,10 +17,8 @@ const main = async () => {
     instanceImageId: string;
     submission_table_name: string;
     judge_queue_name: string;
-    submission_file_path: string;
     subnetId: string;
     vpcId: string;
-    file_domain: string;
     bucket_name: string;
   } = JSON.parse(
     (await new AWS.SSM()
@@ -151,14 +149,6 @@ const main = async () => {
           {
             Name: "JUDGE_QUEUE_NAME",
             Value: parameters.judge_queue_name
-          },
-          {
-            Name: "SUBMISSION_FILE_PATH",
-            Value: parameters.submission_file_path
-          },
-          {
-            Name: "FILE_DOMAIN",
-            Value: parameters.file_domain
           },
           {
             Name: "BUCKET_NAME",

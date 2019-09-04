@@ -22,12 +22,10 @@ var submissionTableName = os.Getenv("SUBMISSION_TABLE_NAME")
 var judgeQueueName = os.Getenv("JUDGE_QUEUE_NAME")
 var submissionFilePath = os.Getenv("SUBMISSION_FILE_PATH")
 var isabellePath = os.Getenv("ISABELLE_PATH")
-var fileDomain = os.Getenv("FILE_DOMAIN")
 var bucketName = os.Getenv("BUCKET_NAME")
 
 type SQSClient struct {
-	queueName string
-	queueUrl  string
+	queueUrl string
 	*sqs.SQS
 }
 
@@ -40,9 +38,8 @@ func NewSQSClient(queueName string, instance *sqs.SQS) (SQSClient, error) {
 	}
 
 	return SQSClient{
-		queueName: queueName,
-		queueUrl:  *res.QueueUrl,
-		SQS:       instance,
+		queueUrl: *res.QueueUrl,
+		SQS:      instance,
 	}, nil
 }
 
