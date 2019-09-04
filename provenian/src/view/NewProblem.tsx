@@ -61,7 +61,7 @@ const NewProblem: React.FC<RouteComponentProps> = props => {
 imports Submitted
 begin
 
-thorem "_"
+theorem "_"
 by (rule goal)
 
 end`,
