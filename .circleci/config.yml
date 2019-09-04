@@ -32,10 +32,10 @@ jobs:
       - pulumi/login
       - run:
           command: npm ci
-          working_directory: api
+          working_directory: judge
       - pulumi/update:
           stack: myuon/provenian-judge/<< parameters.env >>
-          working_directory: api
+          working_directory: judge
 
 workflows:
   version: 2
