@@ -38,6 +38,6 @@ workflows:
           env: prod
           filters:
             tags:
-              only: /^release-.*/
+              only: /^api-release-.*/
             branches:
               ignore: /.*/
