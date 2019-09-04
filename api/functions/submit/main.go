@@ -35,9 +35,10 @@ func (repo SubmitRepo) Create(submission model.Submission) (model.Submission, er
 
 	codeFilePath := submission.ProblemID + "/submissions/" + submission.ID
 	if _, err := repo.s3service.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(storageBucketName),
-		Key:    aws.String(codeFilePath),
-		Body:   aws.ReadSeekCloser(strings.NewReader(submission.Code)),
+		Bucket:       aws.String(storageBucketName),
+		Key:          aws.String(codeFilePath),
+		Body:         aws.ReadSeekCloser(strings.NewReader(submission.Code)),
+		CacheControl: aws.String("public, max-age=86400"),
 	}); err != nil {
 		return model.Submission{}, err
 	}

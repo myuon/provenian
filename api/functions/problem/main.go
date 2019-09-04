@@ -125,9 +125,10 @@ func (repo ProblemRepo) doPut(problemID string, problem Problem, draft bool) err
 	}
 
 	if _, err := repo.s3c.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(storageBucketName),
-		Key:    aws.String(filepath(problemID, draft)),
-		Body:   aws.ReadSeekCloser(strings.NewReader(string(json))),
+		Bucket:       aws.String(storageBucketName),
+		Key:          aws.String(filepath(problemID, draft)),
+		Body:         aws.ReadSeekCloser(strings.NewReader(string(json))),
+		CacheControl: aws.String("public, max-age=86400"),
 	}); err != nil {
 		return err
 	}
@@ -137,9 +138,10 @@ func (repo ProblemRepo) doPut(problemID string, problem Problem, draft bool) err
 
 func (repo ProblemRepo) saveAttachment(problemID string, language string, filename string, code string, draft bool) error {
 	if _, err := repo.s3c.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(storageBucketName),
-		Key:    aws.String(filepathAttachment(problemID, language, filename, draft)),
-		Body:   aws.ReadSeekCloser(strings.NewReader(code)),
+		Bucket:       aws.String(storageBucketName),
+		Key:          aws.String(filepathAttachment(problemID, language, filename, draft)),
+		Body:         aws.ReadSeekCloser(strings.NewReader(code)),
+		CacheControl: aws.String("public, max-age=86400"),
 	}); err != nil {
 		return err
 	}
@@ -179,9 +181,10 @@ func (repo ProblemRepo) publishIndex() error {
 	}
 
 	if _, err := repo.s3c.PutObject(&s3.PutObjectInput{
-		Bucket: aws.String(storageBucketName),
-		Key:    aws.String("index.json"),
-		Body:   aws.ReadSeekCloser(strings.NewReader(string(body))),
+		Bucket:       aws.String(storageBucketName),
+		Key:          aws.String("index.json"),
+		Body:         aws.ReadSeekCloser(strings.NewReader(string(body))),
+		CacheControl: aws.String("public, max-age=300"),
 	}); err != nil {
 		return errors.Wrap(err, "failed to put object")
 	}
