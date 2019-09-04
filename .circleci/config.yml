@@ -20,6 +20,22 @@ jobs:
       - pulumi/update:
           stack: myuon/provenian-api/<< parameters.env >>
           working_directory: api
+  judge-deploy:
+    parameters:
+      env:
+        type: enum
+        enum: ["dev", "prod"]
+    docker:
+      - image: myuon/node-on-golang:latest
+    steps:
+      - checkout
+      - pulumi/login
+      - run:
+          command: npm ci
+          working_directory: api
+      - pulumi/update:
+          stack: myuon/provenian-judge/<< parameters.env >>
+          working_directory: api
 
 workflows:
   version: 2
@@ -39,5 +55,23 @@ workflows:
           filters:
             tags:
               only: /^api-release-.*/
+            branches:
+              ignore: /.*/
+  judge-dev:
+    jobs:
+      - judge-deploy:
+          context: aws
+          env: dev
+          filters:
+            branches:
+              only: master
+  judge-prod:
+    jobs:
+      - judge-deploy:
+          context: aws
+          env: prod
+          filters:
+            tags:
+              only: /^judge-release-.*/
             branches:
               ignore: /.*/
